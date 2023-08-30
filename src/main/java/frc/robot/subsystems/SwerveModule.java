@@ -3,9 +3,10 @@ package frc.robot.subsystems;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.util.Units;
 
+import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
@@ -23,20 +24,24 @@ public class SwerveModule{
 
     private final double absoluteEncoderOffset;
 
-    private final double WHEEL_CIRCUMFERENCE_METERS;
-    private final double TURNING_GEAR_RATIO;
-    private final double DRIVING_GEAR_RATIO;
-
     public SwerveModule(int driveMotorId, int turnMotorId, boolean driveMotorReversed, double absoluteEncoderOffset, int TurnCANCoderId){
         this.absoluteEncoderOffset = absoluteEncoderOffset;
+        
+        SupplyCurrentLimitConfiguration falconlimit = new SupplyCurrentLimitConfiguration();
+        falconlimit.enable = true;
+        falconlimit.currentLimit = 45;
+        falconlimit.triggerThresholdCurrent = 45;
+        falconlimit.triggerThresholdTime = 0;
 
         driveMotor = new TalonFX(driveMotorId, "drivetrain");
         driveMotor.configFactoryDefault();
         driveMotor.setNeutralMode(NeutralMode.Brake);
+        driveMotor.configSupplyCurrentLimit(falconlimit);
 
         turnMotor = new TalonFX(turnMotorId, "drivetrain");
         turnMotor.configFactoryDefault();
         turnMotor.setNeutralMode(NeutralMode.Brake);
+        turnMotor.configSupplyCurrentLimit(falconlimit);
 
 
         absoluteEncoder = new WPI_CANCoder(TurnCANCoderId, "drivetrain");
@@ -46,10 +51,7 @@ public class SwerveModule{
         turningPidController = new PIDController(0.015, 0.0, 0.0);
         turningPidController.enableContinuousInput(-180, 180); //Tells the PID controller that 180 and -180 are at the same place
 
-        WHEEL_CIRCUMFERENCE_METERS = Units.inchesToMeters(4 * Math.PI);
-        TURNING_GEAR_RATIO = 150.0/7;
-        DRIVING_GEAR_RATIO = 6.12;
-        setPoint = 7; //This is impossible bcs its in radians so it can't reach that high yk
+        setPoint = 7.0; //This is impossible bcs its in radians so it can't reach that high yk
 
     }
 
@@ -59,7 +61,7 @@ public class SwerveModule{
             return -1;
         }
 
-        double turnDegreeValue = turnMotor.getSelectedSensorPosition() % (2048 * TURNING_GEAR_RATIO) / (2048 * TURNING_GEAR_RATIO) * 360;
+        double turnDegreeValue = turnMotor.getSelectedSensorPosition() % (2048 * Constants.TURNING_GEAR_RATIO) / (2048 * Constants.TURNING_GEAR_RATIO) * 360;
 
         turnDegreeValue = (setPoint * 180 / Math.PI) + ((setPoint * 180 / Math.PI) - turnDegreeValue); //Adjusts the value cause the falcon encoder is upside down compared to the wheel
 
@@ -90,8 +92,8 @@ public class SwerveModule{
     }
 
     public double getDriveVelocity() {
-        double wheelRPM = falconToRPM(driveMotor.getSelectedSensorVelocity(), DRIVING_GEAR_RATIO);
-        double wheelMPS = (wheelRPM * WHEEL_CIRCUMFERENCE_METERS) / 60;
+        double wheelRPM = falconToRPM(driveMotor.getSelectedSensorVelocity(), Constants.DRIVING_GEAR_RATIO);
+        double wheelMPS = (wheelRPM * Constants.WHEEL_CIRCUMFERENCE_METERS) / 60;
         return wheelMPS;
     }
 
@@ -111,6 +113,10 @@ public class SwerveModule{
 
     public SwerveModuleState getState() {
         return new SwerveModuleState(getDriveVelocity(), new Rotation2d(getTurnPosition(false)));
+    }
+
+    public SwerveModulePosition getPosition() {
+        return new SwerveModulePosition(getDriveVelocity(), getState().angle);
     }
 
     public void setDesiredState(SwerveModuleState state, int motor) {
@@ -135,7 +141,7 @@ public class SwerveModule{
     }
 
     public void setTurnEncoder(int motor, double radians) {
-        double desired_ticks = radians / Math.PI * (1024 * TURNING_GEAR_RATIO);
+        double desired_ticks = radians / Math.PI * (1024 * Constants.TURNING_GEAR_RATIO);
         turningPidController.reset();
         setPoint = radians;  //Before this line is executed setPoint is equal to 7
         turnMotor.setSelectedSensorPosition(desired_ticks);

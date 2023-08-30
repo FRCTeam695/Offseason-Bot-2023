@@ -4,7 +4,11 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import com.kauailabs.navx.frc.AHRS;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.SPI;
 import frc.robot.Constants;
@@ -12,10 +16,19 @@ import frc.robot.Constants;
 public class SwerveSubsystem extends SubsystemBase{
 
     //initialize all the swerve modules
-    private final SwerveModule frontRight = new SwerveModule(13, 12, true, 158, 11);
-    private final SwerveModule frontLeft = new SwerveModule(23, 22, true, 222, 21);
-    private final SwerveModule bottomLeft = new SwerveModule(33, 32, true, 247, 31);
-    private final SwerveModule bottomRight = new SwerveModule(43, 42, false, 29, 41);
+    //private final SwerveModule frontRight = new SwerveModule(13, 12, true, 158, 11);
+    //private final SwerveModule frontLeft = new SwerveModule(23, 22, true, 222, 21);
+    //private final SwerveModule bottomLeft = new SwerveModule(33, 32, true, 247, 31);
+    //private final SwerveModule bottomRight = new SwerveModule(43, 42, false, 29, 41);
+
+    private final SwerveModule frontRight = new SwerveModule(13, 12, true, 169, 11);
+    private final SwerveModule frontLeft = new SwerveModule(23, 22, true, 49, 21);
+    private final SwerveModule bottomLeft = new SwerveModule(33, 32, true, 353, 31);
+    private final SwerveModule bottomRight = new SwerveModule(43, 42, true, 26, 41);
+
+    //creates the odometry class
+    SwerveDriveOdometry odometry = new SwerveDriveOdometry(Constants.kDriveKinematics, new Rotation2d(), new SwerveModulePosition[] 
+    {frontRight.getPosition(), frontLeft.getPosition(), bottomLeft.getPosition(), bottomRight.getPosition()});
 
 
     //initialize the gyro
@@ -79,6 +92,15 @@ public class SwerveSubsystem extends SubsystemBase{
             case 4: bottomRight.setTurnEncoder(motor, bottomRight.getAbsoluteEncoderRadians());break;
             default: ;
         }
-        
+    }
+
+    @Override
+    public void periodic(){
+        odometry.update(new Rotation2d(getHeading() * Math.PI / 180), new SwerveModulePosition[] 
+        {frontRight.getPosition(), frontLeft.getPosition(), bottomLeft.getPosition(), bottomRight.getPosition()});
+    }
+
+    public void setOdometer(Rotation2d gyroAngle, SwerveModulePosition[] modulePositions, Pose2d pose){
+        odometry.resetPosition(gyroAngle, modulePositions, pose);
     }
 }

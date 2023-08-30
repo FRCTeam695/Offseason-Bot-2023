@@ -7,6 +7,9 @@ import edu.wpi.first.math.util.Units;
 public final class Constants {
     public static final double MAX_SPEED_METERS_PER_SECONDS = 4.572;
     public static final double MAX_ANGULAR_SPEED_METERS_PER_SECOND = 2 * Math.PI; // Physical max speed is 4 * PI
+    public static final double TURNING_GEAR_RATIO = 150.0/7;
+    public static final double DRIVING_GEAR_RATIO = 6.12;
+    public static final double WHEEL_CIRCUMFERENCE_METERS = 4 * Math.PI;
     public static final double TRACK_WIDTH = Units.inchesToMeters(24.5);
     public static final double WHEEL_BASE = Units.inchesToMeters(21.25);
 
