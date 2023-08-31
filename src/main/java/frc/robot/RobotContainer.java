@@ -28,7 +28,6 @@ public class RobotContainer {
   private final DoubleSupplier left_yAxis = () -> (controller.getRawAxis(1));
   private final DoubleSupplier right_xAxis = () -> (controller.getRawAxis(4));
 
-
   public RobotContainer() {
     configureBindings();
     instantCommands();

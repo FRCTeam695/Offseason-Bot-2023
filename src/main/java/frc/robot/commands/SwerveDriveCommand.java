@@ -6,11 +6,13 @@ package frc.robot.commands;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.SwerveSubsystem;
 
 import java.util.function.DoubleSupplier;
+import frc.robot.Robot;
 import frc.robot.Constants;
 
 public class SwerveDriveCommand extends CommandBase {
@@ -19,6 +21,9 @@ public class SwerveDriveCommand extends CommandBase {
   private final SwerveSubsystem m_Subsystem;
   private final DoubleSupplier xSpeed, ySpeed, turningSpeed;
   private final boolean feildOriented;
+  private final SwerveDriveKinematics driveKinematics;
+  private final double maxSpeedMPS;
+  private final double maxAngularMPS;
 
 
   public SwerveDriveCommand(SwerveSubsystem subsystem, DoubleSupplier xSpeed, DoubleSupplier ySpeed, DoubleSupplier turningSpeed, boolean feildOriented) {
@@ -27,6 +32,18 @@ public class SwerveDriveCommand extends CommandBase {
     this.ySpeed = ySpeed;
     this.turningSpeed = turningSpeed;
     this.feildOriented = feildOriented;
+
+    if (Robot.m_SwerveChooser.getSelected() == Robot.originalSwerve){
+      maxAngularMPS = Constants.FlintSwerve.MAX_ANGULAR_SPEED_METERS_PER_SECOND;
+      maxSpeedMPS = Constants.FlintSwerve.MAX_SPEED_METERS_PER_SECONDS;
+      driveKinematics = Constants.FlintSwerve.kDriveKinematics;
+    }
+    else {
+      maxAngularMPS = Constants.SummerSwerve.MAX_ANGULAR_SPEED_METERS_PER_SECOND;
+      maxSpeedMPS = Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS;
+      driveKinematics = Constants.SummerSwerve.kDriveKinematics;
+    }
+
 
     addRequirements(subsystem);
   }
@@ -59,9 +76,9 @@ public class SwerveDriveCommand extends CommandBase {
 
 
     //Scale up the speeds, WPILib likes them in meters per second
-    Xj = Xj * Constants.MAX_SPEED_METERS_PER_SECONDS;
-    Yj = Yj * Constants.MAX_SPEED_METERS_PER_SECONDS;
-    Zj = Zj * Constants.MAX_ANGULAR_SPEED_METERS_PER_SECOND;
+    Xj = Xj * maxSpeedMPS;
+    Yj = Yj * maxSpeedMPS;
+    Zj = Zj * maxAngularMPS;
 
 
     //construct chassis speeds
@@ -74,7 +91,7 @@ public class SwerveDriveCommand extends CommandBase {
 
 
     //convert chassis speeds to module states
-    SwerveModuleState[] moduleStates = Constants.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
+    SwerveModuleState[] moduleStates = driveKinematics.toSwerveModuleStates(chassisSpeeds);
   
 
     //set the modules to their desired speeds

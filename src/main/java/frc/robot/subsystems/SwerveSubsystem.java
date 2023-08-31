@@ -2,6 +2,8 @@ package frc.robot.subsystems;
 
 //import frc.robot.subsystems.SwerveModule;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
+import frc.robot.Robot;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -11,9 +13,9 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.SPI;
-import frc.robot.Constants;
 
 public class SwerveSubsystem extends SubsystemBase{
+
 
     //initialize all the swerve modules
     //private final SwerveModule frontRight = new SwerveModule(13, 12, true, 158, 11);
@@ -21,14 +23,15 @@ public class SwerveSubsystem extends SubsystemBase{
     //private final SwerveModule bottomLeft = new SwerveModule(33, 32, true, 247, 31);
     //private final SwerveModule bottomRight = new SwerveModule(43, 42, false, 29, 41);
 
+
     private final SwerveModule frontRight = new SwerveModule(13, 12, true, 169, 11);
     private final SwerveModule frontLeft = new SwerveModule(23, 22, true, 49, 21);
     private final SwerveModule bottomLeft = new SwerveModule(33, 32, true, 353, 31);
     private final SwerveModule bottomRight = new SwerveModule(43, 42, true, 26, 41);
 
     //creates the odometry class
-    SwerveDriveOdometry odometry = new SwerveDriveOdometry(Constants.kDriveKinematics, new Rotation2d(), new SwerveModulePosition[] 
-    {frontRight.getPosition(), frontLeft.getPosition(), bottomLeft.getPosition(), bottomRight.getPosition()});
+    SwerveDriveOdometry odometry;
+    private final double maxSpeedMPS;
 
 
     //initialize the gyro
@@ -36,6 +39,20 @@ public class SwerveSubsystem extends SubsystemBase{
 
 
     public SwerveSubsystem() {
+        if (Robot.m_SwerveChooser.getSelected() == Robot.originalSwerve){
+            SwerveDriveKinematics driveKinematics = Constants.FlintSwerve.kDriveKinematics;
+            odometry = new SwerveDriveOdometry(driveKinematics, new Rotation2d(), new SwerveModulePosition[] 
+    {frontRight.getPosition(), frontLeft.getPosition(), bottomLeft.getPosition(), bottomRight.getPosition()});
+            maxSpeedMPS = Constants.FlintSwerve.MAX_SPEED_METERS_PER_SECONDS;
+            
+        }
+        else{
+            SwerveDriveKinematics driveKinematics = Constants.SummerSwerve.kDriveKinematics;
+            odometry = new SwerveDriveOdometry(driveKinematics, new Rotation2d(), new SwerveModulePosition[] 
+    {frontRight.getPosition(), frontLeft.getPosition(), bottomLeft.getPosition(), bottomRight.getPosition()});
+            maxSpeedMPS = Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS;
+        }
+
         //resets the gyro, it is calibrating when this code is reached so we reset it on a different thread with a delay
         new Thread(() -> {
             try {
@@ -55,7 +72,7 @@ public class SwerveSubsystem extends SubsystemBase{
     }
 
     public void setModules(SwerveModuleState[] desiredStates){
-        SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, Constants.MAX_SPEED_METERS_PER_SECONDS);
+        SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, maxSpeedMPS);
         frontRight.setDesiredState(desiredStates[0], 1);
         frontLeft.setDesiredState(desiredStates[1], 2);
         bottomLeft.setDesiredState(desiredStates[2], 3);

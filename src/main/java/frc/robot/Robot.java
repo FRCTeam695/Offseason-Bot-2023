@@ -8,6 +8,9 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;  
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
  * each mode, as described in the TimedRobot documentation. If you change the name of this class or
@@ -19,10 +22,18 @@ public class Robot extends TimedRobot {
 
   private RobotContainer m_robotContainer;
 
+  public static final String originalSwerve = "Flint Swerve";
+  public static final String newSwerve = "Summer Swerve";
+  public static final SendableChooser<String> m_SwerveChooser = new SendableChooser<>();
+
   @Override
   public void robotInit() {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
+
+    m_SwerveChooser.setDefaultOption("Flint Swerve", originalSwerve);
+    m_SwerveChooser.addOption("Summer Swerve", newSwerve);
+    SmartDashboard.putData("Swerve Choices", m_SwerveChooser);
     m_robotContainer = new RobotContainer();
   }
 

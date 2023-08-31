@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import frc.robot.Robot;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -23,6 +24,11 @@ public class SwerveModule{
     private final PIDController turningPidController;
 
     private final double absoluteEncoderOffset;
+    private final double turningGearRatio;
+    private final double drivingGearRatio;
+    private final double maxSpeedMPS;
+    private final double wheelCircumference;
+
 
     public SwerveModule(int driveMotorId, int turnMotorId, boolean driveMotorReversed, double absoluteEncoderOffset, int TurnCANCoderId){
         this.absoluteEncoderOffset = absoluteEncoderOffset;
@@ -53,6 +59,19 @@ public class SwerveModule{
 
         setPoint = 7.0; //This is impossible bcs its in radians so it can't reach that high yk
 
+        //Constants
+        if(Robot.m_SwerveChooser.getSelected() == Robot.originalSwerve){
+            turningGearRatio = Constants.FlintSwerve.TURNING_GEAR_RATIO;
+            drivingGearRatio = Constants.FlintSwerve.DRIVING_GEAR_RATIO;
+            maxSpeedMPS = Constants.FlintSwerve.MAX_SPEED_METERS_PER_SECONDS;
+            wheelCircumference = Constants.FlintSwerve.WHEEL_CIRCUMFERENCE_METERS;
+        }
+        else{
+            turningGearRatio = Constants.SummerSwerve.TURNING_GEAR_RATIO;
+            drivingGearRatio = Constants.SummerSwerve.DRIVING_GEAR_RATIO;
+            maxSpeedMPS = Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS;
+            wheelCircumference = Constants.SummerSwerve.WHEEL_CIRCUMFERENCE_METERS;
+        }
     }
 
     public double getTurnPosition(boolean degrees) {
@@ -61,7 +80,7 @@ public class SwerveModule{
             return -1;
         }
 
-        double turnDegreeValue = turnMotor.getSelectedSensorPosition() % (2048 * Constants.TURNING_GEAR_RATIO) / (2048 * Constants.TURNING_GEAR_RATIO) * 360;
+        double turnDegreeValue = turnMotor.getSelectedSensorPosition() % (2048 * turningGearRatio) / (2048 * turningGearRatio) * 360;
 
         turnDegreeValue = (setPoint * 180 / Math.PI) + ((setPoint * 180 / Math.PI) - turnDegreeValue); //Adjusts the value cause the falcon encoder is upside down compared to the wheel
 
@@ -73,7 +92,7 @@ public class SwerveModule{
         while (turnDegreeValue < -180) {
             turnDegreeValue += 360;
         }
-        
+
         if (degrees){
             return turnDegreeValue;
         }
@@ -92,8 +111,8 @@ public class SwerveModule{
     }
 
     public double getDriveVelocity() {
-        double wheelRPM = falconToRPM(driveMotor.getSelectedSensorVelocity(), Constants.DRIVING_GEAR_RATIO);
-        double wheelMPS = (wheelRPM * Constants.WHEEL_CIRCUMFERENCE_METERS) / 60;
+        double wheelRPM = falconToRPM(driveMotor.getSelectedSensorVelocity(), drivingGearRatio);
+        double wheelMPS = (wheelRPM * wheelCircumference) / 60;
         return wheelMPS;
     }
 
@@ -131,7 +150,7 @@ public class SwerveModule{
         double turnMotorOutput = -1 * MathUtil.clamp(turningPidController.calculate(getState().angle.getDegrees(), setpoint), -1, 1);
         //Multiply by -1 above because the falcon is upside down compared to the wheel
 
-        driveMotor.set(ControlMode.PercentOutput, state.speedMetersPerSecond / Constants.MAX_SPEED_METERS_PER_SECONDS);
+        driveMotor.set(ControlMode.PercentOutput, state.speedMetersPerSecond / maxSpeedMPS);
         turnMotor.set(ControlMode.PercentOutput, turnMotorOutput);
     }
 
@@ -141,7 +160,7 @@ public class SwerveModule{
     }
 
     public void setTurnEncoder(int motor, double radians) {
-        double desired_ticks = radians / Math.PI * (1024 * Constants.TURNING_GEAR_RATIO);
+        double desired_ticks = radians / Math.PI * (1024 * turningGearRatio);
         turningPidController.reset();
         setPoint = radians;  //Before this line is executed setPoint is equal to 7
         turnMotor.setSelectedSensorPosition(desired_ticks);
