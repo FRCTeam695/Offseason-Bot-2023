@@ -17,17 +17,10 @@ import edu.wpi.first.wpilibj.SPI;
 public class SwerveSubsystem extends SubsystemBase{
 
 
-    //initialize all the swerve modules
-    //private final SwerveModule frontRight = new SwerveModule(13, 12, true, 158, 11);
-    //private final SwerveModule frontLeft = new SwerveModule(23, 22, true, 222, 21);
-    //private final SwerveModule bottomLeft = new SwerveModule(33, 32, true, 247, 31);
-    //private final SwerveModule bottomRight = new SwerveModule(43, 42, false, 29, 41);
-
-
-    private final SwerveModule frontRight = new SwerveModule(13, 12, true, 169, 11);
-    private final SwerveModule frontLeft = new SwerveModule(23, 22, true, 49, 21);
-    private final SwerveModule bottomLeft = new SwerveModule(33, 32, true, 353, 31);
-    private final SwerveModule bottomRight = new SwerveModule(43, 42, true, 26, 41);
+    private final SwerveModule frontRight;
+    private final SwerveModule frontLeft;
+    private final SwerveModule bottomLeft;
+    private final SwerveModule bottomRight;
 
     //creates the odometry class
     SwerveDriveOdometry odometry;
@@ -40,13 +33,23 @@ public class SwerveSubsystem extends SubsystemBase{
 
     public SwerveSubsystem() {
         if (Robot.m_SwerveChooser.getSelected() == Robot.originalSwerve){
+            //
+            frontRight = new SwerveModule(13, 12, true, 158, 11);
+            frontLeft = new SwerveModule(23, 22, true, 222, 21);
+            bottomLeft = new SwerveModule(33, 32, true, 247, 31);
+            bottomRight = new SwerveModule(43, 42, false, 29, 41);
             SwerveDriveKinematics driveKinematics = Constants.FlintSwerve.kDriveKinematics;
             odometry = new SwerveDriveOdometry(driveKinematics, new Rotation2d(), new SwerveModulePosition[] 
     {frontRight.getPosition(), frontLeft.getPosition(), bottomLeft.getPosition(), bottomRight.getPosition()});
             maxSpeedMPS = Constants.FlintSwerve.MAX_SPEED_METERS_PER_SECONDS;
-            
         }
+
         else{
+            //Summer Swerve Chassis
+            frontRight = new SwerveModule(13, 12, true, 169, 11);
+            frontLeft = new SwerveModule(23, 22, true, 49, 21);
+            bottomLeft = new SwerveModule(33, 32, true, 353, 31);
+            bottomRight = new SwerveModule(43, 42, true, 26, 41);
             SwerveDriveKinematics driveKinematics = Constants.SummerSwerve.kDriveKinematics;
             odometry = new SwerveDriveOdometry(driveKinematics, new Rotation2d(), new SwerveModulePosition[] 
     {frontRight.getPosition(), frontLeft.getPosition(), bottomLeft.getPosition(), bottomRight.getPosition()});
