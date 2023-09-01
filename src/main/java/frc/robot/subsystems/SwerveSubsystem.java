@@ -23,7 +23,7 @@ public class SwerveSubsystem extends SubsystemBase{
     private final SwerveModule bottomRight;
 
     //creates the odometry class
-    SwerveDriveOdometry odometry;
+    public SwerveDriveOdometry odometry;
     private final double maxSpeedMPS;
 
 
@@ -33,7 +33,7 @@ public class SwerveSubsystem extends SubsystemBase{
 
     public SwerveSubsystem() {
         if (Robot.m_SwerveChooser.getSelected() == Robot.originalSwerve){
-            //
+            //Flint swerve
             frontRight = new SwerveModule(13, 12, true, 158, 11);
             frontLeft = new SwerveModule(23, 22, true, 222, 21);
             bottomLeft = new SwerveModule(33, 32, true, 247, 31);
