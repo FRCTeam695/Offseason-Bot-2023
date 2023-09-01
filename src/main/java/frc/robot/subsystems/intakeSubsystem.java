@@ -42,49 +42,27 @@ public class intakeSubsystem extends SubsystemBase{
         encoder1.setPosition(0);
         encoder2.setPosition(0);
 
+        lastPosition1 = encoder1.getPosition();
+        lastPosition2 = encoder2.getPosition();
+
+        stallTimer.reset();
+        stallTimer.start();
+
         stallHold = false;
         running = false;
     }
-    //check stall
-    private void isStalled() {
-        if (running) {
-            double currentPosition1 = encoder1.getPosition();
-            double currentPosition2 = encoder2.getPosition();
 
-
-            if (stallTimer.get() > Constants.Intake.stallTimeout) {
-                if (Math.abs(currentPosition1 - lastPosition1) < 2 || Math.abs(currentPosition2 - lastPosition2) < 2) {
-                    intakeMotor1.setSmartCurrentLimit(3);
-                    intakeMotor2.setSmartCurrentLimit(3);
-                    stallHold = true;
-                }
-            } else {
-                intakeMotor1.setSmartCurrentLimit(25);
-                intakeMotor2.setSmartCurrentLimit(25);
-                stallHold = false;
-            }
-        } else {
-            stallTimer.reset();
-            stallHold = false;
-        }
-    }
     //-1 for intake 1 for outtake
     public void runIntake(double speed){
-        
-        isStalled();
 
         if (getStallHold()){
             runspeed = 0;
             setSpeed(runspeed);
         }
 
-        lastPosition1 = encoder1.getPosition();
-        lastPosition2 = encoder2.getPosition();
-
-        stallTimer.reset();
-        stallTimer.start();
-        
-        setSpeed(speed);
+        else{
+            setSpeed(speed);
+        }
     }
 
     private void setSpeed(double speed) {
@@ -93,8 +71,9 @@ public class intakeSubsystem extends SubsystemBase{
     }
 
     private void setMotors(double speed){
+        running = true;
         intakeMotor1.set(speed);
-        intakeMotor2.set(speed * -1);
+        intakeMotor2.set(speed * -1); //this one has to move backwards to intake a cube/cone
     }
 
     private boolean getStallHold(){
@@ -105,5 +84,50 @@ public class intakeSubsystem extends SubsystemBase{
         setMotors(0);
         running = false;
         stallHold = false;
+    }
+
+    //used for ending the command
+    public boolean endCommand(){
+
+        if(getStallHold()){
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
+    public void periodic(){
+        if (running) {
+            
+            double currentPosition1 = encoder1.getPosition();
+            double currentPosition2 = encoder2.getPosition();
+
+
+            if (stallTimer.get() > Constants.Intake.stallTimeout) {
+                if (Math.abs(currentPosition1 - lastPosition1) < 2 || Math.abs(currentPosition2 - lastPosition2) < 2) {
+                    intakeMotor1.setSmartCurrentLimit(3);
+                    intakeMotor2.setSmartCurrentLimit(3);
+                    stallHold = true;
+                }
+
+                else{
+                    lastPosition1 = currentPosition1;
+                    lastPosition2 = currentPosition2;
+                }
+
+            stallTimer.reset();
+            stallTimer.start();
+
+            } else {
+                intakeMotor1.setSmartCurrentLimit(25);
+                intakeMotor2.setSmartCurrentLimit(25);
+                stallHold = false;
+            }
+
+        } else {
+            stallTimer.reset();
+            stallHold = false;
+        }
     }
 }

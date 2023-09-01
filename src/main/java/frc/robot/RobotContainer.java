@@ -6,10 +6,14 @@ package frc.robot;
 
 import frc.robot.commands.Autos;
 import frc.robot.commands.SwerveDriveCommand;
+import frc.robot.commands.intakeCommand;
 import frc.robot.subsystems.ExampleSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
+import frc.robot.subsystems.intakeSubsystem;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+
 import java.util.function.DoubleSupplier;
 
 /**
@@ -22,7 +26,11 @@ public class RobotContainer {
 
   private final ExampleSubsystem m_exampleSubsystem = new ExampleSubsystem();
   private final SwerveSubsystem m_swerveSubsystem = new SwerveSubsystem();
+  private final intakeSubsystem m_IntakeSubsystem = new intakeSubsystem();
   private final XboxController controller = new XboxController(0);
+
+  private final JoystickButton leftBumper = new JoystickButton(controller, 5);
+  private final JoystickButton rightBumper = new JoystickButton(controller, 6);
 
   private final DoubleSupplier left_xAxis = () -> (controller.getRawAxis(0));
   private final DoubleSupplier left_yAxis = () -> (controller.getRawAxis(1));
@@ -35,7 +43,8 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
-
+    leftBumper.onTrue(new intakeCommand(m_IntakeSubsystem, -1)); //should intake the cube
+    rightBumper.whileTrue(new intakeCommand(m_IntakeSubsystem, 1)); //should outtake the cube
   }
 
   private void instantCommands() {
