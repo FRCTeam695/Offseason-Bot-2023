@@ -12,11 +12,7 @@ import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.SwerveSubsystem;
 
 import java.util.function.DoubleSupplier;
-import frc.robot.Robot;
 import frc.robot.Constants;
-
-
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
 
 public class SwerveDriveCommand extends CommandBase {
   @SuppressWarnings({"PMD.UnusedPrivateField", "PMD.SingularField"})
@@ -36,16 +32,9 @@ public class SwerveDriveCommand extends CommandBase {
     this.turningSpeed = turningSpeed;
     this.feildOriented = feildOriented;
 
-    if (Robot.m_SwerveChooser.getSelected() == Robot.originalSwerve){
-      maxAngularMPS = Constants.FlintSwerve.MAX_ANGULAR_SPEED_METERS_PER_SECOND;
-      maxSpeedMPS = Constants.FlintSwerve.MAX_SPEED_METERS_PER_SECONDS;
-      driveKinematics = Constants.FlintSwerve.kDriveKinematics;
-    }
-    else {
-      maxAngularMPS = Constants.SummerSwerve.MAX_ANGULAR_SPEED_METERS_PER_SECOND;
-      maxSpeedMPS = Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS;
-      driveKinematics = Constants.SummerSwerve.kDriveKinematics;
-    }
+    maxAngularMPS = Constants.SummerSwerve.MAX_ANGULAR_SPEED_METERS_PER_SECOND;
+    maxSpeedMPS = Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS;
+    driveKinematics = Constants.SummerSwerve.kDriveKinematics;
 
 
     addRequirements(subsystem);

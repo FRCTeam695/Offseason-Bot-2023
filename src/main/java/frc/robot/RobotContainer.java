@@ -39,7 +39,6 @@ import java.util.function.DoubleSupplier;
  */
 public class RobotContainer {
 
-  private final ExampleSubsystem m_exampleSubsystem = new ExampleSubsystem();
   private final SwerveSubsystem swerveSubsystem = new SwerveSubsystem();
   private final intakeSubsystem m_IntakeSubsystem = new intakeSubsystem();
   private final XboxController controller = new XboxController(0);

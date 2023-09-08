@@ -15,6 +15,7 @@ import java.util.ArrayList;
 
 public class exampleTrajectory {
 
+  //Don't worry about this for now, code not in use
     private final SwerveDriveKinematics driveKinematics;
     private final double maxSpeedMPS;
     private final double maxAccelerationMPS;

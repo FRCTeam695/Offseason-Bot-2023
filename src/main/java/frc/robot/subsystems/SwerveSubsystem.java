@@ -3,7 +3,6 @@ package frc.robot.subsystems;
 //import frc.robot.subsystems.SwerveModule;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.Robot;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -32,29 +31,15 @@ public class SwerveSubsystem extends SubsystemBase{
 
 
     public SwerveSubsystem() {
-        if (Robot.m_SwerveChooser.getSelected() == Robot.originalSwerve){
-            //Flint swerve
-            frontRight = new SwerveModule(13, 12, true, 158, 11);
-            frontLeft = new SwerveModule(23, 22, true, 222, 21);
-            bottomLeft = new SwerveModule(33, 32, true, 247, 31);
-            bottomRight = new SwerveModule(43, 42, false, 29, 41);
-            SwerveDriveKinematics driveKinematics = Constants.FlintSwerve.kDriveKinematics;
-            odometry = new SwerveDriveOdometry(driveKinematics, new Rotation2d(), new SwerveModulePosition[] 
+        //Summer Swerve Chassis
+        frontRight = new SwerveModule(13, 12, true, 171, 11);
+        frontLeft = new SwerveModule(23, 22, true, 49, 21);
+        bottomLeft = new SwerveModule(33, 32, true, 349, 31);
+        bottomRight = new SwerveModule(43, 42, true, 207, 41);
+        SwerveDriveKinematics driveKinematics = Constants.SummerSwerve.kDriveKinematics;
+        odometry = new SwerveDriveOdometry(driveKinematics, new Rotation2d(), new SwerveModulePosition[] 
     {frontRight.getPosition(), frontLeft.getPosition(), bottomLeft.getPosition(), bottomRight.getPosition()});
-            maxSpeedMPS = Constants.FlintSwerve.MAX_SPEED_METERS_PER_SECONDS;
-        }
-
-        else{
-            //Summer Swerve Chassis
-            frontRight = new SwerveModule(13, 12, true, 169, 11);
-            frontLeft = new SwerveModule(23, 22, true, 49, 21);
-            bottomLeft = new SwerveModule(33, 32, true, 353, 31);
-            bottomRight = new SwerveModule(43, 42, true, 26, 41);
-            SwerveDriveKinematics driveKinematics = Constants.SummerSwerve.kDriveKinematics;
-            odometry = new SwerveDriveOdometry(driveKinematics, new Rotation2d(), new SwerveModulePosition[] 
-    {frontRight.getPosition(), frontLeft.getPosition(), bottomLeft.getPosition(), bottomRight.getPosition()});
-            maxSpeedMPS = Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS;
-        }
+        maxSpeedMPS = Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS;
 
         //resets the gyro, it is calibrating when this code is reached so we reset it on a different thread with a delay
         new Thread(() -> {
