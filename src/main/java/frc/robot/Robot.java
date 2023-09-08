@@ -26,6 +26,9 @@ public class Robot extends TimedRobot {
   public static final String newSwerve = "Summer Swerve";
   public static final SendableChooser<String> m_SwerveChooser = new SendableChooser<>();
 
+  public static final String exampleTrajectory = "Example Trajectory";
+  public static final SendableChooser<String> m_TrajectoryChooser = new SendableChooser<>();
+
   @Override
   public void robotInit() {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
@@ -34,6 +37,9 @@ public class Robot extends TimedRobot {
     m_SwerveChooser.setDefaultOption("Flint Swerve", originalSwerve);
     m_SwerveChooser.addOption("Summer Swerve", newSwerve);
     SmartDashboard.putData("Swerve Choices", m_SwerveChooser);
+
+    m_TrajectoryChooser.setDefaultOption("Example Trajectory", exampleTrajectory);
+    SmartDashboard.putData("Trajectory Choice", m_TrajectoryChooser);
     m_robotContainer = new RobotContainer();
   }
 

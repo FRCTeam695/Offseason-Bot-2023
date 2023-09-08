@@ -74,12 +74,26 @@ public class SwerveSubsystem extends SubsystemBase{
         return -1 * Math.IEEEremainder(gyro.getAngle(), 360);  //Multiply by negative one because on wpilib as you go counterclockwise angles should get bigger
     }
 
+    public Pose2d getPose(){
+        return odometry.getPoseMeters();
+    }
+
     public void setModules(SwerveModuleState[] desiredStates){
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, maxSpeedMPS);
         frontRight.setDesiredState(desiredStates[0], 1);
         frontLeft.setDesiredState(desiredStates[1], 2);
         bottomLeft.setDesiredState(desiredStates[2], 3);
         bottomRight.setDesiredState(desiredStates[3], 4);
+    }
+
+    public SwerveModulePosition getModulePosition(int motor){
+        switch(motor){
+            case 1: return frontRight.getPosition();
+            case 2: return frontLeft.getPosition();
+            case 3: return bottomLeft.getPosition();
+            case 4: return bottomRight.getPosition();
+            default: return bottomLeft.getPosition();
+        }
     }
 
     public double getAbsoluteEncoderValue(int motor) {
@@ -120,7 +134,14 @@ public class SwerveSubsystem extends SubsystemBase{
         {frontRight.getPosition(), frontLeft.getPosition(), bottomLeft.getPosition(), bottomRight.getPosition()});
     }
 
-    public void setOdometer(Rotation2d gyroAngle, SwerveModulePosition[] modulePositions, Pose2d pose){
-        odometry.resetPosition(gyroAngle, modulePositions, pose);
+    public void setOdometer(SwerveModulePosition[] modulePositions, Pose2d pose){
+        odometry.resetPosition(new Rotation2d(getHeading()), modulePositions, pose);
+    }
+
+    public void stopModules(){
+        frontRight.stop();
+        frontLeft.stop();
+        bottomLeft.stop();
+        bottomRight.stop();
     }
 }

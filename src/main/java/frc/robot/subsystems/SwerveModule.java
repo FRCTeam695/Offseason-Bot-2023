@@ -6,6 +6,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -72,6 +73,7 @@ public class SwerveModule{
             maxSpeedMPS = Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS;
             wheelCircumference = Constants.SummerSwerve.WHEEL_CIRCUMFERENCE_METERS;
         }
+
     }
 
     public double getTurnPosition(boolean degrees) {
@@ -100,10 +102,11 @@ public class SwerveModule{
         return turnDegreeValue * Math.PI / 180;
     }
 
-    public double falconToRPM(double velocityCounts, double gearRatio) {
-        double motorRPM = velocityCounts * (600.0 / 2048.0);        
-        double mechRPM = motorRPM / gearRatio;
-        return mechRPM;
+    public double falconToRPS(double velocityCounts, double gearRatio) {
+        SmartDashboard.putNumber("Velocity Counts", velocityCounts);
+        double motorRPS = velocityCounts * (10 / 2048.0);        
+        double mechRPS = motorRPS / gearRatio * -1;  //multiply by negative 1 bcs the falcon is upside down
+        return mechRPS;
     }
 
     public double degreesToFalcon(double degrees, double gearRatio) {
@@ -111,8 +114,8 @@ public class SwerveModule{
     }
 
     public double getDriveVelocity() {
-        double wheelRPM = falconToRPM(driveMotor.getSelectedSensorVelocity(), drivingGearRatio);
-        double wheelMPS = (wheelRPM * wheelCircumference) / 60;
+        double wheelRPM = falconToRPS(driveMotor.getSelectedSensorVelocity(), drivingGearRatio);
+        double wheelMPS = wheelRPM * wheelCircumference;
         return wheelMPS;
     }
 
@@ -135,6 +138,7 @@ public class SwerveModule{
     }
 
     public SwerveModulePosition getPosition() {
+        SmartDashboard.putNumber("Drive Velocity", getDriveVelocity());
         return new SwerveModulePosition(getDriveVelocity(), getState().angle);
     }
 

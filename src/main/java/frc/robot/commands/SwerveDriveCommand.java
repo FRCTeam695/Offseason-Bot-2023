@@ -15,6 +15,9 @@ import java.util.function.DoubleSupplier;
 import frc.robot.Robot;
 import frc.robot.Constants;
 
+
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
+
 public class SwerveDriveCommand extends CommandBase {
   @SuppressWarnings({"PMD.UnusedPrivateField", "PMD.SingularField"})
 
@@ -93,7 +96,6 @@ public class SwerveDriveCommand extends CommandBase {
     //convert chassis speeds to module states
     SwerveModuleState[] moduleStates = driveKinematics.toSwerveModuleStates(chassisSpeeds);
   
-
     //set the modules to their desired speeds
     m_Subsystem.setModules(moduleStates);
   }
