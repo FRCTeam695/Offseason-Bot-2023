@@ -15,7 +15,7 @@ public class intakeCommand extends CommandBase {
 
   public intakeCommand(intakeSubsystem subsystem, double speed) {
     this.subsystem = subsystem;
-    this.speed = speed;
+    this.speed = speed * 0.25;
 
     addRequirements(subsystem);
   }

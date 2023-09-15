@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.SwerveSubsystem;
 
@@ -43,28 +44,30 @@ public class SwerveDriveCommand extends CommandBase {
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
-    m_Subsystem.setRelativeTurnEncoderValue(1);  //Uses the absolute encoder value to set the relative encoders
-    m_Subsystem.setRelativeTurnEncoderValue(2);
-    m_Subsystem.setRelativeTurnEncoderValue(3);
-    m_Subsystem.setRelativeTurnEncoderValue(4);
+    m_Subsystem.setRelativeTurnEncoderValue();  //Uses the absolute encoder value to set the relative encoders
   }
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-
+    
     //Gets values from double suppliers
     Double Xj = -1 * xSpeed.getAsDouble(); //Inverted because WPIlib coordinate system is weird, link to docs below
     Double Yj = -1 * ySpeed.getAsDouble(); //The controller is inverted
     Double Zj = -1 * turningSpeed.getAsDouble(); //Inverted because WPIlib coordinate system is weird, link to docs below
 
+    //Speed Limits
+    //Xj *= 0.5;
+    //Yj *= 0.5;
+    //Zj *= 0.5;
+
     //Check "Robot Coordinate System" https://docs.wpilib.org/en/stable/docs/software/advanced-controls/geometry/coordinate-systems.html
     //It is the same logic as the SwerveDriveKinematics object created in Constants.java, the (positive, positive) quadrant is in the top left
 
     //Deadband
-    Xj = Math.abs(Xj) > 0.15 ? Xj : 0;
-    Yj = Math.abs(Yj) > 0.15 ? Yj : 0;
-    Zj = Math.abs(Zj) > 0.15 ? Zj : 0;
+    Xj = Math.abs(Xj) > 0.25 ? Xj : 0;
+    Yj = Math.abs(Yj) > 0.25 ? Yj : 0;
+    Zj = Math.abs(Zj) > 0.25 ? Zj : 0;
 
 
     //Scale up the speeds, WPILib likes them in meters per second

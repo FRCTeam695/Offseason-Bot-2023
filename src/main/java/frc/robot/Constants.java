@@ -8,8 +8,16 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 public final class Constants {
     public static final class Intake{
         public static final double stallTimeout = 0.5;
-        public static final int motor1ID = 9;
-        public static final int motor2ID = 8;
+        public static final int MOTOR_1_ID = 52;
+        public static final int MOTOR_2_ID = 51;
+    }
+
+    public static final class Arm{
+        public static final int ARM_MOTOR_ID = 53;
+        public static final double ARM_GEAR_RATIO = 192;
+        public static final int LEVEL_1_TICKS = 0;
+        public static final int LEVEL_2_TICKS = 18432;
+        public static final int LEVEL_3_TICKS = 28672;
     }
 
     public static final class SummerSwerve{
@@ -20,12 +28,12 @@ public final class Constants {
         public static final double DRIVING_GEAR_RATIO = 6.12;
         public static final double WHEEL_CIRCUMFERENCE_METERS = 4 * Math.PI;
         public static final double THETA_KP_VALUE = 0.015;
-        public static final double MAX_ACCELERATION_RADIANS_PER_SECOND = Math.PI;
+        public static final double MAX_VELOCITY_RADIANS_PER_SECOND = Math.PI;
         public static final double MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED = Math.PI;
 
         public static final TrapezoidProfile.Constraints TRAPEZOID_THETA_CONSTRAINTS =
         new TrapezoidProfile.Constraints(
-            MAX_ACCELERATION_RADIANS_PER_SECOND, MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED);
+            MAX_ANGULAR_SPEED_METERS_PER_SECOND, MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED);
 
         public static final double TRACK_WIDTH = Units.inchesToMeters(19);
         public static final double WHEEL_BASE = Units.inchesToMeters(19);

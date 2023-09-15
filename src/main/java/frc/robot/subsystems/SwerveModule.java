@@ -61,18 +61,10 @@ public class SwerveModule{
         setPoint = 7.0; //This is impossible bcs its in radians so it can't reach that high yk
 
         //Constants
-        if(Robot.m_SwerveChooser.getSelected() == Robot.originalSwerve){
-            turningGearRatio = Constants.FlintSwerve.TURNING_GEAR_RATIO;
-            drivingGearRatio = Constants.FlintSwerve.DRIVING_GEAR_RATIO;
-            maxSpeedMPS = Constants.FlintSwerve.MAX_SPEED_METERS_PER_SECONDS;
-            wheelCircumference = Constants.FlintSwerve.WHEEL_CIRCUMFERENCE_METERS;
-        }
-        else{
-            turningGearRatio = Constants.SummerSwerve.TURNING_GEAR_RATIO;
-            drivingGearRatio = Constants.SummerSwerve.DRIVING_GEAR_RATIO;
-            maxSpeedMPS = Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS;
-            wheelCircumference = Constants.SummerSwerve.WHEEL_CIRCUMFERENCE_METERS;
-        }
+        turningGearRatio = Constants.SummerSwerve.TURNING_GEAR_RATIO;
+        drivingGearRatio = Constants.SummerSwerve.DRIVING_GEAR_RATIO;
+        maxSpeedMPS = Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS;
+        wheelCircumference = Constants.SummerSwerve.WHEEL_CIRCUMFERENCE_METERS;
 
     }
 
@@ -149,6 +141,9 @@ public class SwerveModule{
         }
 
         state = SwerveModuleState.optimize(state, getState().angle);
+        if (motor == 3){
+            SmartDashboard.putNumber("state", state.angle.getDegrees());
+        }
         
         double setpoint = state.angle.getDegrees();
         double turnMotorOutput = -1 * MathUtil.clamp(turningPidController.calculate(getState().angle.getDegrees(), setpoint), -1, 1);
@@ -163,7 +158,7 @@ public class SwerveModule{
         turnMotor.set(ControlMode.PercentOutput, 0);
     }
 
-    public void setTurnEncoder(int motor, double radians) {
+    public void setTurnEncoder(double radians) {
         double desired_ticks = radians / Math.PI * (1024 * turningGearRatio);
         turningPidController.reset();
         setPoint = radians;  //Before this line is executed setPoint is equal to 7

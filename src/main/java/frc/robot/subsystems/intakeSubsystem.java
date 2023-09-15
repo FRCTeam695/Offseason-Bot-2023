@@ -13,8 +13,8 @@ import edu.wpi.first.wpilibj.Timer;
 public class intakeSubsystem extends SubsystemBase{
 
     //init motors
-    private CANSparkMax intakeMotor1 = new CANSparkMax(Constants.Intake.motor1ID, MotorType.kBrushless);
-    private CANSparkMax intakeMotor2 = new CANSparkMax(Constants.Intake.motor2ID, MotorType.kBrushless);
+    private CANSparkMax intakeMotor1 = new CANSparkMax(Constants.Intake.MOTOR_1_ID, MotorType.kBrushless);
+    private CANSparkMax intakeMotor2 = new CANSparkMax(Constants.Intake.MOTOR_2_ID, MotorType.kBrushless);
 
     //get encoders
     private RelativeEncoder encoder1 = intakeMotor1.getEncoder();
@@ -33,11 +33,11 @@ public class intakeSubsystem extends SubsystemBase{
     public intakeSubsystem(){
         intakeMotor1.restoreFactoryDefaults();
         intakeMotor1.setIdleMode(IdleMode.kBrake);
-        intakeMotor1.setSmartCurrentLimit(25);
+        intakeMotor1.setSmartCurrentLimit(50);
 
         intakeMotor2.restoreFactoryDefaults();
         intakeMotor2.setIdleMode(IdleMode.kBrake);
-        intakeMotor2.setSmartCurrentLimit(25);
+        intakeMotor2.setSmartCurrentLimit(50);
 
         encoder1.setPosition(0);
         encoder2.setPosition(0);
@@ -90,12 +90,14 @@ public class intakeSubsystem extends SubsystemBase{
     public boolean endCommand(){
 
         if(getStallHold()){
+            System.out.println("Stalled");
             return true;
         }
 
         return false;
     }
 
+    
     @Override
     public void periodic(){
         if (running) {
@@ -120,8 +122,8 @@ public class intakeSubsystem extends SubsystemBase{
             stallTimer.start();
 
             } else {
-                intakeMotor1.setSmartCurrentLimit(25);
-                intakeMotor2.setSmartCurrentLimit(25);
+                intakeMotor1.setSmartCurrentLimit(50);
+                intakeMotor2.setSmartCurrentLimit(50);
                 stallHold = false;
             }
 
@@ -130,4 +132,5 @@ public class intakeSubsystem extends SubsystemBase{
             stallHold = false;
         }
     }
+    
 }

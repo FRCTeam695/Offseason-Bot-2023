@@ -21,25 +21,18 @@ public class exampleTrajectory {
     private final double maxAccelerationMPS;
 
     public exampleTrajectory(){
-        if (Robot.m_SwerveChooser.getSelected() == Robot.originalSwerve){
-            driveKinematics = Constants.FlintSwerve.kDriveKinematics;
-            maxSpeedMPS = Constants.FlintSwerve.MAX_SPEED_METERS_PER_SECONDS;
-            maxAccelerationMPS = Constants.FlintSwerve.MAX_ACCELERATION_METERS_PER_SECOND;
-          }
-          else{
-            driveKinematics = Constants.SummerSwerve.kDriveKinematics;
-            maxSpeedMPS = Constants.FlintSwerve.MAX_SPEED_METERS_PER_SECONDS;
-            maxAccelerationMPS = Constants.FlintSwerve.MAX_ACCELERATION_METERS_PER_SECOND;
-          }
+        driveKinematics = Constants.SummerSwerve.kDriveKinematics;
+        maxSpeedMPS = Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS;
+        maxAccelerationMPS = Constants.SummerSwerve.MAX_ACCELERATION_METERS_PER_SECOND;
     }
     
     public Trajectory generateTrajectory(){
         Pose2d startingPoint = new Pose2d(0, 0, Rotation2d.fromDegrees(0));
-        Pose2d endingPoint = new Pose2d(3, 0, Rotation2d.fromDegrees(145));
+        Pose2d endingPoint = new Pose2d(2, 0, Rotation2d.fromDegrees(145));
 
         var interiorWaypoints = new ArrayList<Translation2d>();
         interiorWaypoints.add(new Translation2d(1, 0));
-        interiorWaypoints.add(new Translation2d(2, 0));
+        interiorWaypoints.add(new Translation2d(1, -1));
 
         TrajectoryConfig trajectoryConfig = new TrajectoryConfig(maxSpeedMPS * 0.5, maxAccelerationMPS).setKinematics(driveKinematics);
         Trajectory trajectory = TrajectoryGenerator.generateTrajectory(startingPoint, interiorWaypoints, endingPoint, trajectoryConfig);

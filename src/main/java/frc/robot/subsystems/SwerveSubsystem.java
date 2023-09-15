@@ -12,6 +12,8 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 
 public class SwerveSubsystem extends SubsystemBase{
 
@@ -28,6 +30,7 @@ public class SwerveSubsystem extends SubsystemBase{
 
     //initialize the gyro
     private final AHRS gyro = new AHRS(SPI.Port.kMXP); 
+    private double gyroAngle;
 
 
     public SwerveSubsystem() {
@@ -35,7 +38,13 @@ public class SwerveSubsystem extends SubsystemBase{
         frontRight = new SwerveModule(13, 12, true, 171, 11);
         frontLeft = new SwerveModule(23, 22, true, 49, 21);
         bottomLeft = new SwerveModule(33, 32, true, 349, 31);
-        bottomRight = new SwerveModule(43, 42, true, 207, 41);
+        bottomRight = new SwerveModule(43, 42, false, 207, 41);
+
+        //Flint Swerve Chassis
+        //frontRight = new SwerveModule(13, 12, true, 158, 11);
+        //frontLeft = new SwerveModule(23, 22, true, 222, 21);
+        //bottomLeft = new SwerveModule(33, 32, true, 247, 31);
+        //bottomRight = new SwerveModule(43, 42, false, 29, 41);
         SwerveDriveKinematics driveKinematics = Constants.SummerSwerve.kDriveKinematics;
         odometry = new SwerveDriveOdometry(driveKinematics, new Rotation2d(), new SwerveModulePosition[] 
     {frontRight.getPosition(), frontLeft.getPosition(), bottomLeft.getPosition(), bottomRight.getPosition()});
@@ -56,7 +65,9 @@ public class SwerveSubsystem extends SubsystemBase{
     }
 
     public double getHeading(){
-        return -1 * Math.IEEEremainder(gyro.getAngle(), 360);  //Multiply by negative one because on wpilib as you go counterclockwise angles should get bigger
+        gyroAngle = -1 * Math.IEEEremainder(gyro.getAngle(), 360);
+        SmartDashboard.putNumber("Gyro Reading", gyroAngle);
+        return gyroAngle;  //Multiply by negative one because on wpilib as you go counterclockwise angles should get bigger
     }
 
     public Pose2d getPose(){
@@ -73,10 +84,18 @@ public class SwerveSubsystem extends SubsystemBase{
 
     public SwerveModulePosition getModulePosition(int motor){
         switch(motor){
-            case 1: return frontRight.getPosition();
-            case 2: return frontLeft.getPosition();
-            case 3: return bottomLeft.getPosition();
-            case 4: return bottomRight.getPosition();
+            case 1: 
+            SmartDashboard.putNumber("Module Position 1: ", getRelativeTurnEncoderValue(1));
+            return frontRight.getPosition();
+            case 2: 
+            SmartDashboard.putNumber("Module Position 2: ", getRelativeTurnEncoderValue(2));
+            return frontLeft.getPosition();
+            case 3: 
+            SmartDashboard.putNumber("Module Position 3: ", getRelativeTurnEncoderValue(3));
+            return bottomLeft.getPosition();
+            case 4: 
+            SmartDashboard.putNumber("Module Position 4: ", getRelativeTurnEncoderValue(4));
+            return bottomRight.getPosition();
             default: return bottomLeft.getPosition();
         }
     }
@@ -101,16 +120,12 @@ public class SwerveSubsystem extends SubsystemBase{
         }
     }
 
-    public void setRelativeTurnEncoderValue(int motor){
-
+    public void setRelativeTurnEncoderValue(){
         //Uses the absolute encoder value to set relative encoders
-        switch(motor){
-            case 1: frontRight.setTurnEncoder(motor, frontRight.getAbsoluteEncoderRadians());break;
-            case 2: frontLeft.setTurnEncoder(motor, frontLeft.getAbsoluteEncoderRadians());break;
-            case 3: bottomLeft.setTurnEncoder(motor, bottomLeft.getAbsoluteEncoderRadians());break;
-            case 4: bottomRight.setTurnEncoder(motor, bottomRight.getAbsoluteEncoderRadians());break;
-            default: ;
-        }
+        frontRight.setTurnEncoder(frontRight.getAbsoluteEncoderRadians());
+        frontLeft.setTurnEncoder(frontLeft.getAbsoluteEncoderRadians());
+        bottomLeft.setTurnEncoder(bottomLeft.getAbsoluteEncoderRadians());
+        bottomRight.setTurnEncoder(bottomRight.getAbsoluteEncoderRadians());
     }
 
     @Override
