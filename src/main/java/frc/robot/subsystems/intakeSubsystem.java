@@ -8,6 +8,8 @@ import com.revrobotics.*;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.Timer;
 
 public class intakeSubsystem extends SubsystemBase{
@@ -15,10 +17,15 @@ public class intakeSubsystem extends SubsystemBase{
     //init motors
     private CANSparkMax intakeMotor1 = new CANSparkMax(Constants.Intake.MOTOR_1_ID, MotorType.kBrushless);
     private CANSparkMax intakeMotor2 = new CANSparkMax(Constants.Intake.MOTOR_2_ID, MotorType.kBrushless);
+    //private CANSparkMax armMotor = new CANSparkMax(53, MotorType.kBrushless);
 
     //get encoders
     private RelativeEncoder encoder1 = intakeMotor1.getEncoder();
     private RelativeEncoder encoder2 = intakeMotor2.getEncoder();
+
+    // arm encoder
+    //private DigitalInput armDI = new DigitalInput(9);
+    //private DutyCycleEncoder armEncoder = new DutyCycleEncoder(armDI);
 
     private Timer stallTimer = new Timer();
     private double lastPosition1;
@@ -38,6 +45,10 @@ public class intakeSubsystem extends SubsystemBase{
         intakeMotor2.restoreFactoryDefaults();
         intakeMotor2.setIdleMode(IdleMode.kBrake);
         intakeMotor2.setSmartCurrentLimit(50);
+
+        //armMotor.restoreFactoryDefaults();
+        //armMotor.setIdleMode(IdleMode.kBrake);
+        //armMotor.setSmartCurrentLimit(50);
 
         encoder1.setPosition(0);
         encoder2.setPosition(0);
@@ -63,6 +74,11 @@ public class intakeSubsystem extends SubsystemBase{
         else{
             setSpeed(speed);
         }
+    }
+
+    public void runArm(double speed)
+    {
+        //armMotor.set(speed);
     }
 
     private void setSpeed(double speed) {
@@ -97,14 +113,18 @@ public class intakeSubsystem extends SubsystemBase{
         return false;
     }
 
-    
+    public double getArmPosition()
+    {
+        return 1;
+        //return(armEncoder.getAbsolutePosition());
+    }
+
     @Override
     public void periodic(){
         if (running) {
             
             double currentPosition1 = encoder1.getPosition();
             double currentPosition2 = encoder2.getPosition();
-
 
             if (stallTimer.get() > Constants.Intake.stallTimeout) {
                 if (Math.abs(currentPosition1 - lastPosition1) < 2 || Math.abs(currentPosition2 - lastPosition2) < 2) {

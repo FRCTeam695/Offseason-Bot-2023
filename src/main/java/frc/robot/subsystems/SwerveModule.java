@@ -36,8 +36,8 @@ public class SwerveModule{
         
         SupplyCurrentLimitConfiguration falconlimit = new SupplyCurrentLimitConfiguration();
         falconlimit.enable = true;
-        falconlimit.currentLimit = 45;
-        falconlimit.triggerThresholdCurrent = 45;
+        falconlimit.currentLimit = 20;
+        falconlimit.triggerThresholdCurrent = 20;
         falconlimit.triggerThresholdTime = 0;
 
         driveMotor = new TalonFX(driveMotorId, "drivetrain");

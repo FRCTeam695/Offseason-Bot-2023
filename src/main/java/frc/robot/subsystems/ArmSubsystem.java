@@ -9,28 +9,33 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
 public class ArmSubsystem extends SubsystemBase {
 
     private CANSparkMax armMotor = new CANSparkMax(Constants.Arm.ARM_MOTOR_ID, MotorType.kBrushless);
-    private RelativeEncoder armEncoder = armMotor.getEncoder();
-    private PIDController armController = new PIDController(0.7, 0, 0);
-    private final double[] TICK_LEVELS = {Constants.Arm.LEVEL_1_TICKS, Constants.Arm.LEVEL_2_TICKS, Constants.Arm.LEVEL_3_TICKS};
+    // arm encoder
+    private DigitalInput armDI = new DigitalInput(9);
+    private DutyCycleEncoder armEncoder = new DutyCycleEncoder(armDI);
+    private PIDController armController = new PIDController(7.5, 0, 0);
+
     private int newLevel;
-    private double setpoint;
+    private double setpoint = 0;
     private double currentState;
-    private double pos;
+    private double output;
 
     public ArmSubsystem() {
         armMotor.restoreFactoryDefaults();
         armMotor.setIdleMode(IdleMode.kBrake);
 
-        armEncoder.setPosition(0);
     }
-
+/*
     public int getLevel() {
         pos = armEncoder.getPosition();
         for(int i = 2; i > 0; i--){
@@ -40,20 +45,55 @@ public class ArmSubsystem extends SubsystemBase {
         }
         return 0;
     }
+*/
+
+    public void runArm(double speed)
+    {
+        armMotor.set(speed);
+    }
 
     public void setLevel(int level){
         newLevel = level;
     }
 
+    public double getArmPosition()
+    {
+        return(armEncoder.getAbsolutePosition());
+    }
+
     @Override
     public void periodic(){
-        
-        if(newLevel == getLevel()){
-            return;
+        if(newLevel == 2){
+            setpoint = 0.57;
+
+            currentState = getArmPosition();
+            output = -1 * armController.calculate(currentState, setpoint);
+            System.out.println("Current State " + currentState);
+            System.out.println("Setpoint " + setpoint);
+            System.out.println(MathUtil.clamp(output, -1, 1));
+            runArm(MathUtil.clamp(output, -1, 1));
+        }if(newLevel == 1){
+            setpoint = 0.94;
+
+            currentState = getArmPosition();
+            output = -1 * armController.calculate(currentState, setpoint);
+            System.out.println("Current State " + currentState);
+            System.out.println("Setpoint " + setpoint);
+            System.out.println(MathUtil.clamp(output, -1, 1));
+            runArm(MathUtil.clamp(output, -1, 1));
         }
-
-        
-
+        /*
+        if(newLevel == 2){
+            if(getArmPosition() >= 0.57)
+        {
+          runArm(0.25);
+        }
+            if (getArmPosition() <= 0.56)
+        {
+          runArm(-0.25);
+        }
+        }
+        */
     }
 
 }

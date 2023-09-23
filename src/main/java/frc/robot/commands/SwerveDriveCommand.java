@@ -65,9 +65,9 @@ public class SwerveDriveCommand extends CommandBase {
     //It is the same logic as the SwerveDriveKinematics object created in Constants.java, the (positive, positive) quadrant is in the top left
 
     //Deadband
-    Xj = Math.abs(Xj) > 0.25 ? Xj : 0;
-    Yj = Math.abs(Yj) > 0.25 ? Yj : 0;
-    Zj = Math.abs(Zj) > 0.25 ? Zj : 0;
+    Xj = Math.abs(Xj) > 0.1 ? Xj : 0;
+    Yj = Math.abs(Yj) > 0.1 ? Yj : 0;
+    Zj = Math.abs(Zj) > 0.1 ? Zj : 0;
 
 
     //Scale up the speeds, WPILib likes them in meters per second

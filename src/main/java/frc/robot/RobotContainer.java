@@ -7,6 +7,7 @@ package frc.robot;
 import frc.robot.commands.Autos;
 import frc.robot.commands.SwerveDriveCommand;
 import frc.robot.commands.intakeCommand;
+import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
 import frc.robot.subsystems.intakeSubsystem;
 import frc.robot.paths.exampleTrajectory;
@@ -15,13 +16,16 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
@@ -40,11 +44,20 @@ import java.util.function.DoubleSupplier;
 public class RobotContainer {
   private final SwerveSubsystem swerveSubsystem = new SwerveSubsystem();
   private final intakeSubsystem m_IntakeSubsystem = new intakeSubsystem();
+  private final ArmSubsystem m_ArmSubsystem = new ArmSubsystem();
   private final XboxController controller = new XboxController(0);
 
   private final JoystickButton leftBumper = new JoystickButton(controller, 5);
   private final JoystickButton rightBumper = new JoystickButton(controller, 6);
   private final JoystickButton a_Button = new JoystickButton(controller, 1);
+  private final JoystickButton b_Button = new JoystickButton(controller, 2);
+  private final JoystickButton x_Button = new JoystickButton(controller,3);
+  private final JoystickButton y_Button = new JoystickButton(controller,4);
+
+  private final JoystickButton back_Button = new JoystickButton(controller, 7);
+
+  private final POVButton pov_Up = new POVButton(controller, 0);
+  private final POVButton pov_Down = new POVButton(controller, 180);
 
   private final DoubleSupplier left_xAxis = () -> (controller.getRawAxis(0));
   private final DoubleSupplier left_yAxis = () -> (controller.getRawAxis(1));
@@ -68,12 +81,103 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
-    leftBumper.whileTrue(new intakeCommand(m_IntakeSubsystem, -1)); //should intake the cube
-    rightBumper.whileTrue(new intakeCommand(m_IntakeSubsystem, 1)); //should outtake the cube
+    leftBumper.whileTrue(new intakeCommand(m_IntakeSubsystem, -0.25)); // intake the cube
+    rightBumper.whileTrue(new intakeCommand(m_IntakeSubsystem, 0.05)); //outtake the cube, lower level
+    a_Button.whileTrue(new intakeCommand(m_IntakeSubsystem, 0.95)); //blast outtake the cube, high level
+    b_Button.whileTrue(new intakeCommand(m_IntakeSubsystem, 0.25)); //outtake, mid level
   }
 
   private void instantCommands() {
-    a_Button.onTrue(new InstantCommand(()-> {swerveSubsystem.zeroHeading();}, swerveSubsystem));
+    
+
+    back_Button.onTrue(new InstantCommand(()-> {swerveSubsystem.zeroHeading();}, swerveSubsystem));
+
+    
+    x_Button.onTrue(new InstantCommand(()-> {m_ArmSubsystem.setLevel(2);}, m_ArmSubsystem));
+    
+    y_Button.onTrue(new InstantCommand(()-> {m_ArmSubsystem.setLevel(1);}, m_ArmSubsystem));
+    /*
+        y_Button.onTrue(
+          new FunctionalCommand(
+    
+            // init
+            ()-> 
+            {
+            },
+    
+            // execute
+            ()-> 
+            {
+                m_ArmSubsystem.runArm(-1);
+            },
+    
+            // end
+            interrupted-> 
+            {
+              m_ArmSubsystem.runArm(0);
+            },
+    
+            // end condition
+            ()-> m_ArmSubsystem.getArmPosition() >= 0.94));
+        */
+            
+      pov_Up.whileTrue(
+      new FunctionalCommand(
+
+        // init
+        ()-> 
+        {
+        },
+
+        // execute
+        ()-> 
+        {
+          System.out.println(m_IntakeSubsystem.getArmPosition());
+          if (m_IntakeSubsystem.getArmPosition() > 0.5)
+          {
+            m_IntakeSubsystem.runArm(0.25);
+          }
+        },
+
+        // end
+        interrupted-> 
+        {
+          m_IntakeSubsystem.runArm(0.0);
+        },
+
+        // end condition
+        ()-> false));
+    
+
+    pov_Down.whileTrue(
+      new FunctionalCommand(
+
+        // init
+        ()-> 
+        {
+        },
+
+        // execute
+        ()-> 
+        {
+          System.out.println(m_IntakeSubsystem.getArmPosition());
+          if (m_IntakeSubsystem.getArmPosition() < 0.9)
+          {
+            m_IntakeSubsystem.runArm(-0.25);
+          }
+        },
+
+        // end
+        interrupted-> 
+        {
+          m_IntakeSubsystem.runArm(0.0);
+        },
+
+        // end condition
+        ()-> false));
+    
+
+
   }
 
   private void defaultCommands() {
