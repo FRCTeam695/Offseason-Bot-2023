@@ -86,6 +86,10 @@ public class intakeSubsystem extends SubsystemBase{
         setMotors(runspeed);
     }
 
+    public void testing(){
+        System.out.println("Running intake");
+    }
+
     private void setMotors(double speed){
         running = true;
         intakeMotor1.set(speed);

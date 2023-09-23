@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -120,7 +121,8 @@ public class RobotContainer {
             // end condition
             ()-> m_ArmSubsystem.getArmPosition() >= 0.94));
         */
-            
+      
+        /*
       pov_Up.whileTrue(
       new FunctionalCommand(
 
@@ -175,9 +177,7 @@ public class RobotContainer {
 
         // end condition
         ()-> false));
-    
-
-
+      */
   }
 
   private void defaultCommands() {
@@ -190,6 +190,7 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
+    /*
     PIDController xController = new PIDController(1, 0, 0);
     PIDController yController = new PIDController(1, 0, 0);
     var thetaController = new ProfiledPIDController(Constants.SummerSwerve.THETA_KP_VALUE, 0, 0, Constants.SummerSwerve.TRAPEZOID_THETA_CONSTRAINTS);
@@ -213,5 +214,21 @@ public class RobotContainer {
     swerveSubsystem.setOdometer(new SwerveModulePosition[] {swerveSubsystem.getModulePosition(1),swerveSubsystem.getModulePosition(2), swerveSubsystem.getModulePosition(3), swerveSubsystem.getModulePosition(4)}, new Pose2d(0, 0, new Rotation2d(0)));
     swerveSubsystem.setRelativeTurnEncoderValue();
     return swerveControllerCommand.andThen(() -> swerveSubsystem.stopModules());
+    */
+    return scorePreload();
+  }
+
+  public Command scorePreload()
+  {
+    return new InstantCommand(()-> {m_ArmSubsystem.setLevel(2);}, m_ArmSubsystem)
+      .andThen(new WaitCommand(1))
+//    .andThen(new InstantCommand(()-> {m_ArmSubsystem.setLevel(2);}, m_ArmSubsystem))
+  //  .andThen(new InstantCommand(()-> {new WaitCommand(1);}))
+  //  //.andThen(new InstantCommand(()-> {m_IntakeSubsystem.testing();}, m_IntakeSubsystem))
+    .andThen(new intakeCommand(m_IntakeSubsystem, 0.95))
+  .andThen(new WaitCommand(1))
+  .andThen(new InstantCommand(()-> {m_IntakeSubsystem.testing();}, m_IntakeSubsystem))
+  .andThen(new intakeCommand(m_IntakeSubsystem, 0))
+    ;
   }
 }

@@ -65,21 +65,15 @@ public class ArmSubsystem extends SubsystemBase {
     public void periodic(){
         if(newLevel == 2){
             setpoint = 0.57;
-
             currentState = getArmPosition();
             output = -1 * armController.calculate(currentState, setpoint);
-            System.out.println("Current State " + currentState);
-            System.out.println("Setpoint " + setpoint);
-            System.out.println(MathUtil.clamp(output, -1, 1));
             runArm(MathUtil.clamp(output, -1, 1));
-        }if(newLevel == 1){
+        }
+        
+        if(newLevel == 1){
             setpoint = 0.94;
-
             currentState = getArmPosition();
             output = -1 * armController.calculate(currentState, setpoint);
-            System.out.println("Current State " + currentState);
-            System.out.println("Setpoint " + setpoint);
-            System.out.println(MathUtil.clamp(output, -1, 1));
             runArm(MathUtil.clamp(output, -1, 1));
         }
         /*
