@@ -82,13 +82,38 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
-    leftBumper.whileTrue(new intakeCommand(m_IntakeSubsystem, -0.25)); // intake the cube
+//    leftBumper.whileTrue(new intakeCommand(m_IntakeSubsystem, -0.25)); // intake the cube
     rightBumper.whileTrue(new intakeCommand(m_IntakeSubsystem, 0.05)); //outtake the cube, lower level
     a_Button.whileTrue(new intakeCommand(m_IntakeSubsystem, 0.95)); //blast outtake the cube, high level
     b_Button.whileTrue(new intakeCommand(m_IntakeSubsystem, 0.25)); //outtake, mid level
   }
 
   private void instantCommands() {
+    
+    leftBumper.whileTrue(
+        new FunctionalCommand(
+  
+          // init
+          ()-> 
+          {
+            m_ArmSubsystem.setLevel(1);
+          },
+  
+          // execute
+          ()-> 
+          {
+            m_IntakeSubsystem.runIntake(-0.25);
+          },
+  
+          // end
+          interrupted-> 
+          {
+            m_ArmSubsystem.setLevel(2);
+            m_IntakeSubsystem.runIntake(0);
+          },
+  
+          // end condition
+          ()-> false));
     
 
     back_Button.onTrue(new InstantCommand(()-> {swerveSubsystem.zeroHeading();}, swerveSubsystem));
