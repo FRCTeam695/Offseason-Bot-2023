@@ -4,6 +4,7 @@
 
 package frc.robot.commands;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -16,15 +17,15 @@ public class SwerveDriveCommand extends CommandBase {
 
   private final SwerveSubsystem m_Subsystem;
   private final DoubleSupplier xSpeed, ySpeed, turningSpeed;
-  private final boolean feildOriented;
+  private final boolean fieldOriented;
 
 
-  public SwerveDriveCommand(SwerveSubsystem subsystem, DoubleSupplier xSpeed, DoubleSupplier ySpeed, DoubleSupplier turningSpeed, boolean feildOriented) {
+  public SwerveDriveCommand(SwerveSubsystem subsystem, DoubleSupplier xSpeed, DoubleSupplier ySpeed, DoubleSupplier turningSpeed, boolean fieldOriented) {
     this.m_Subsystem = subsystem;
     this.xSpeed = xSpeed;
     this.ySpeed = ySpeed;
     this.turningSpeed = turningSpeed;
-    this.feildOriented = feildOriented;
+    this.fieldOriented = fieldOriented;
 
     m_Subsystem.startTickCount();
 
@@ -40,6 +41,10 @@ public class SwerveDriveCommand extends CommandBase {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
+
+    if(DriverStation.isAutonomous()){
+      return;
+    }
     
     //Gets values from double suppliers
     Double Xj = -1 * xSpeed.getAsDouble(); //Inverted because WPIlib coordinate system is weird, link to docs below
@@ -52,7 +57,7 @@ public class SwerveDriveCommand extends CommandBase {
 
     SmartDashboard.putNumber("Ticks", m_Subsystem.getTicks());
 
-    m_Subsystem.driveSwerve(Xj, Zj, Yj, feildOriented);
+    m_Subsystem.driveSwerve(Xj, Zj, Yj, fieldOriented);
   }
 
   // Called once the command ends or is interrupted.
