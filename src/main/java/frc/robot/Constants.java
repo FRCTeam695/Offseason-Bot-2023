@@ -21,13 +21,14 @@ public final class Constants {
     }
 
     public static final class SummerSwerve{
-        public static final double MAX_SPEED_METERS_PER_SECONDS = 4.572;
-        public static final double MAX_ANGULAR_SPEED_METERS_PER_SECOND = 2 * Math.PI; // Physical max speed is 4 * PI
+        public static final double MAX_SPEED_METERS_PER_SECONDS = Units.feetToMeters(13.5);
+        public static final double MAX_ANGULAR_SPEED_METERS_PER_SECOND = 2 * Math.PI;
         public static final double MAX_ACCELERATION_METERS_PER_SECOND = 3;
         public static final double TURNING_GEAR_RATIO = 150.0/7;
-        public static final double DRIVING_GEAR_RATIO = 6.12;
-        public static final double WHEEL_CIRCUMFERENCE_METERS = 4 * Math.PI;
+        public static final double DRIVING_GEAR_RATIO = 8.14;
+        public static final double WHEEL_CIRCUMFERENCE_METERS = Units.inchesToMeters(4 * Math.PI);
         public static final double THETA_KP_VALUE = 0.015;
+        public static final double PROFILED_KP_VALUE = 1; 
         public static final double MAX_VELOCITY_RADIANS_PER_SECOND = Math.PI;
         public static final double MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED = Math.PI;
 

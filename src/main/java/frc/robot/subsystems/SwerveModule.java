@@ -1,6 +1,5 @@
 package frc.robot.subsystems;
 
-import frc.robot.Robot;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -96,7 +95,7 @@ public class SwerveModule{
 
     public double falconToRPS(double velocityCounts, double gearRatio) {
         SmartDashboard.putNumber("Velocity Counts", velocityCounts);
-        double motorRPS = velocityCounts * (10 / 2048.0);        
+        double motorRPS = velocityCounts * (10.0 / 2048.0);        
         double mechRPS = motorRPS / gearRatio * -1;  //multiply by negative 1 bcs the falcon is upside down
         return mechRPS;
     }
@@ -106,8 +105,8 @@ public class SwerveModule{
     }
 
     public double getDriveVelocity() {
-        double wheelRPM = falconToRPS(driveMotor.getSelectedSensorVelocity(), drivingGearRatio);
-        double wheelMPS = wheelRPM * wheelCircumference;
+        double wheelRPS = falconToRPS(driveMotor.getSelectedSensorVelocity(), drivingGearRatio);
+        double wheelMPS = (wheelRPS * wheelCircumference);
         return wheelMPS;
     }
 
@@ -129,9 +128,17 @@ public class SwerveModule{
         return new SwerveModuleState(getDriveVelocity(), new Rotation2d(getTurnPosition(false)));
     }
 
+    public double falconToMeters(double positionCounts, double circumference, double gearRatio){
+        return positionCounts * (circumference / (gearRatio * 2048.0));
+    }
+
     public SwerveModulePosition getPosition() {
         SmartDashboard.putNumber("Drive Velocity", getDriveVelocity());
-        return new SwerveModulePosition(getDriveVelocity(), getState().angle);
+        return new SwerveModulePosition(
+            falconToMeters(driveMotor.getSelectedSensorPosition(), wheelCircumference, drivingGearRatio), 
+            getState().angle
+        );
+        //return new SwerveModulePosition(getDriveVelocity(), getState().angle);
     }
 
     public void setDesiredState(SwerveModuleState state, int motor) {
@@ -163,6 +170,10 @@ public class SwerveModule{
         turningPidController.reset();
         setPoint = radians;  //Before this line is executed setPoint is equal to 7
         turnMotor.setSelectedSensorPosition(desired_ticks);
+    }
+
+    public double getDriveTicks(){
+        return driveMotor.getSelectedSensorPosition();
     }
 
 }

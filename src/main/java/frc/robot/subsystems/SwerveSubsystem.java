@@ -7,6 +7,7 @@ import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -32,6 +33,8 @@ public class SwerveSubsystem extends SubsystemBase{
     private final AHRS gyro = new AHRS(SPI.Port.kMXP); 
     private double gyroAngle;
 
+    public double tickStart;
+
 
     public SwerveSubsystem() {
         //Summer Swerve Chassis
@@ -50,6 +53,8 @@ public class SwerveSubsystem extends SubsystemBase{
     {frontRight.getPosition(), frontLeft.getPosition(), bottomLeft.getPosition(), bottomRight.getPosition()});
         maxSpeedMPS = Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS;
 
+        tickStart = 0;
+
         //resets the gyro, it is calibrating when this code is reached so we reset it on a different thread with a delay
         new Thread(() -> {
             try {
@@ -64,10 +69,22 @@ public class SwerveSubsystem extends SubsystemBase{
         gyro.reset();
     }
 
+    public double getPitch(){
+        return gyro.getPitch();
+    }
+
     public double getHeading(){
         gyroAngle = -1 * Math.IEEEremainder(gyro.getAngle(), 360);
         SmartDashboard.putNumber("Gyro Reading", gyroAngle);
         return gyroAngle;  //Multiply by negative one because on wpilib as you go counterclockwise angles should get bigger
+    }
+
+    public void startTickCount(){
+        tickStart = frontLeft.getDriveTicks();
+    }
+
+    public double getTicks(){
+        return Math.abs(frontLeft.getDriveTicks() - tickStart);
     }
 
     public Pose2d getPose(){
@@ -76,6 +93,7 @@ public class SwerveSubsystem extends SubsystemBase{
 
     public void setModules(SwerveModuleState[] desiredStates){
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, maxSpeedMPS);
+        SmartDashboard.putNumber("Degrees Module 1", desiredStates[0].angle.getDegrees());
         frontRight.setDesiredState(desiredStates[0], 1);
         frontLeft.setDesiredState(desiredStates[1], 2);
         bottomLeft.setDesiredState(desiredStates[2], 3);
@@ -110,6 +128,16 @@ public class SwerveSubsystem extends SubsystemBase{
         }
     }
 
+    public SwerveModuleState getState(int motor) {
+        switch(motor){
+            case 1: return frontRight.getState();
+            case 2: return frontLeft.getState();
+            case 3: return bottomLeft.getState();
+            case 4: return bottomRight.getState();
+            default: return bottomRight.getState(); //just bcs I need a default
+        }
+    }
+
     public double getRelativeTurnEncoderValue(int motor) {
         switch(motor){
             case 1: return frontRight.getTurnPosition(false);
@@ -132,10 +160,23 @@ public class SwerveSubsystem extends SubsystemBase{
     public void periodic(){
         odometry.update(new Rotation2d(getHeading() * Math.PI / 180), new SwerveModulePosition[] 
         {frontRight.getPosition(), frontLeft.getPosition(), bottomLeft.getPosition(), bottomRight.getPosition()});
+        SmartDashboard.putNumber("Pitch", gyro.getPitch());
     }
 
     public void setOdometer(SwerveModulePosition[] modulePositions, Pose2d pose){
-        odometry.resetPosition(new Rotation2d(getHeading()), modulePositions, pose);
+        odometry.resetPosition(new Rotation2d(getHeading() * Math.PI / 180), modulePositions, pose);
+    }
+
+    public void resetOdometry(Pose2d pose) {
+        odometry.resetPosition(
+            gyro.getRotation2d(),
+            new SwerveModulePosition[] {
+                frontRight.getPosition(),
+                frontLeft.getPosition(),
+                bottomLeft.getPosition(),
+                bottomRight.getPosition()
+            },
+                pose);
     }
 
     public void stopModules(){
@@ -143,5 +184,34 @@ public class SwerveSubsystem extends SubsystemBase{
         frontLeft.stop();
         bottomLeft.stop();
         bottomRight.stop();
+    }
+
+    public void driveSwerve(double Xj, double Zj, double Yj, boolean feildOriented){
+        //Deadband
+        Xj = Math.abs(Xj) > 0.01 ? Xj : 0;
+        Yj = Math.abs(Yj) > 0.01 ? Yj : 0;
+        Zj = Math.abs(Zj) > 0.01 ? Zj : 0;
+
+
+        //Scale up the speeds, WPILib likes them in meters per second
+        Xj = Xj * Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS;
+        Yj = Yj * Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS;
+        Zj = Zj * Constants.SummerSwerve.MAX_ANGULAR_SPEED_METERS_PER_SECOND;
+
+
+        //construct chassis speeds
+        ChassisSpeeds chassisSpeeds;
+        if (feildOriented){
+        chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(Yj, Xj, Zj, Rotation2d.fromDegrees(getHeading()));
+        }else{
+        chassisSpeeds = new ChassisSpeeds(Yj, Xj, Zj);
+        }
+
+
+        //convert chassis speeds to module states
+        SwerveModuleState[] moduleStates = Constants.SummerSwerve.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
+    
+        //set the modules to their desired speeds
+        setModules(moduleStates);
     }
 }

@@ -4,16 +4,12 @@
 
 package frc.robot.commands;
 
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.subsystems.SwerveSubsystem;
 
 import java.util.function.DoubleSupplier;
-import frc.robot.Constants;
 
 public class SwerveDriveCommand extends CommandBase {
   @SuppressWarnings({"PMD.UnusedPrivateField", "PMD.SingularField"})
@@ -21,9 +17,6 @@ public class SwerveDriveCommand extends CommandBase {
   private final SwerveSubsystem m_Subsystem;
   private final DoubleSupplier xSpeed, ySpeed, turningSpeed;
   private final boolean feildOriented;
-  private final SwerveDriveKinematics driveKinematics;
-  private final double maxSpeedMPS;
-  private final double maxAngularMPS;
 
 
   public SwerveDriveCommand(SwerveSubsystem subsystem, DoubleSupplier xSpeed, DoubleSupplier ySpeed, DoubleSupplier turningSpeed, boolean feildOriented) {
@@ -33,10 +26,7 @@ public class SwerveDriveCommand extends CommandBase {
     this.turningSpeed = turningSpeed;
     this.feildOriented = feildOriented;
 
-    maxAngularMPS = Constants.SummerSwerve.MAX_ANGULAR_SPEED_METERS_PER_SECOND;
-    maxSpeedMPS = Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS;
-    driveKinematics = Constants.SummerSwerve.kDriveKinematics;
-
+    m_Subsystem.startTickCount();
 
     addRequirements(subsystem);
   }
@@ -56,40 +46,13 @@ public class SwerveDriveCommand extends CommandBase {
     Double Yj = -1 * ySpeed.getAsDouble(); //The controller is inverted
     Double Zj = -1 * turningSpeed.getAsDouble(); //Inverted because WPIlib coordinate system is weird, link to docs below
 
-    //Speed Limits
-    //Xj *= 0.5;
-    //Yj *= 0.5;
-    //Zj *= 0.5;
+    SmartDashboard.putNumber("X", Xj);
+    SmartDashboard.putNumber("Y", Yj);
+    SmartDashboard.putNumber("Z", Zj);
 
-    //Check "Robot Coordinate System" https://docs.wpilib.org/en/stable/docs/software/advanced-controls/geometry/coordinate-systems.html
-    //It is the same logic as the SwerveDriveKinematics object created in Constants.java, the (positive, positive) quadrant is in the top left
+    SmartDashboard.putNumber("Ticks", m_Subsystem.getTicks());
 
-    //Deadband
-    Xj = Math.abs(Xj) > 0.1 ? Xj : 0;
-    Yj = Math.abs(Yj) > 0.1 ? Yj : 0;
-    Zj = Math.abs(Zj) > 0.1 ? Zj : 0;
-
-
-    //Scale up the speeds, WPILib likes them in meters per second
-    Xj = Xj * maxSpeedMPS;
-    Yj = Yj * maxSpeedMPS;
-    Zj = Zj * maxAngularMPS;
-
-
-    //construct chassis speeds
-    ChassisSpeeds chassisSpeeds;
-    if (feildOriented){
-      chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(Yj, Xj, Zj, Rotation2d.fromDegrees(m_Subsystem.getHeading()));
-    }else{
-      chassisSpeeds = new ChassisSpeeds(Yj, Xj, Zj);
-    }
-
-
-    //convert chassis speeds to module states
-    SwerveModuleState[] moduleStates = driveKinematics.toSwerveModuleStates(chassisSpeeds);
-  
-    //set the modules to their desired speeds
-    m_Subsystem.setModules(moduleStates);
+    m_Subsystem.driveSwerve(Xj, Zj, Yj, feildOriented);
   }
 
   // Called once the command ends or is interrupted.
