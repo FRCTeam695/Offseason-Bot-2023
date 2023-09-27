@@ -10,8 +10,6 @@ import frc.robot.commands.intakeCommand;
 import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
 import frc.robot.subsystems.intakeSubsystem;
-import frc.robot.paths.exampleTrajectory;
-import frc.robot.paths.trajectoryPicker;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.Trajectory;
@@ -23,6 +21,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
@@ -71,11 +70,16 @@ public class RobotContainer {
   private PIDController yController = new PIDController(1, 0, 0);
   private ProfiledPIDController thetaController = new ProfiledPIDController(Constants.SummerSwerve.PROFILED_KP_VALUE, 0, 0, Constants.SummerSwerve.TRAPEZOID_THETA_CONSTRAINTS);
 
-  //SendableChooser<Command> m_pathChooser = new SendableChooser<>();
+  SendableChooser<Command> m_pathChooser = new SendableChooser<>();
 
   public RobotContainer() {
     thetaController.enableContinuousInput(-Math.PI, -Math.PI);
     //m_pathChooser.setDefaultOption("Score Preload", scorePreload());
+
+    m_pathChooser.setDefaultOption("Cube/Balance/Left", fullAutonCommand(1));
+    m_pathChooser.addOption("Cube/Balance/Right", fullAutonCommand(2));
+
+    SmartDashboard.putData("Auton Routine", m_pathChooser);
 
     configureBindings();
     instantCommands();
@@ -123,87 +127,7 @@ public class RobotContainer {
     x_Button.onTrue(new InstantCommand(()-> {m_ArmSubsystem.setLevel(2);}, m_ArmSubsystem));
     
     y_Button.onTrue(new InstantCommand(()-> {m_ArmSubsystem.setLevel(1);}, m_ArmSubsystem));
-    /*
-        y_Button.onTrue(
-          new FunctionalCommand(
-    
-            // init
-            ()-> 
-            {
-            },
-    
-            // execute
-            ()-> 
-            {
-                m_ArmSubsystem.runArm(-1);
-            },
-    
-            // end
-            interrupted-> 
-            {
-              m_ArmSubsystem.runArm(0);
-            },
-    
-            // end condition
-            ()-> m_ArmSubsystem.getArmPosition() >= 0.94));
-        */
-      
-        /*
-      pov_Up.whileTrue(
-      new FunctionalCommand(
 
-        // init
-        ()-> 
-        {
-        },
-
-        // execute
-        ()-> 
-        {
-          System.out.println(m_IntakeSubsystem.getArmPosition());
-          if (m_IntakeSubsystem.getArmPosition() > 0.5)
-          {
-            m_IntakeSubsystem.runArm(0.25);
-          }
-        },
-
-        // end
-        interrupted-> 
-        {
-          m_IntakeSubsystem.runArm(0.0);
-        },
-
-        // end condition
-        ()-> false));
-    
-
-    pov_Down.whileTrue(
-      new FunctionalCommand(
-
-        // init
-        ()-> 
-        {
-        },
-
-        // execute
-        ()-> 
-        {
-          System.out.println(m_IntakeSubsystem.getArmPosition());
-          if (m_IntakeSubsystem.getArmPosition() < 0.9)
-          {
-            m_IntakeSubsystem.runArm(-0.25);
-          }
-        },
-
-        // end
-        interrupted-> 
-        {
-          m_IntakeSubsystem.runArm(0.0);
-        },
-
-        // end condition
-        ()-> false));
-      */
   }
 
   private void defaultCommands() {
@@ -219,59 +143,131 @@ public class RobotContainer {
     swerveSubsystem.setRelativeTurnEncoderValue();
     //return moveLeft();
     //return scorePreload().andThen(moveBackwards()).andThen(moveLeft());
-    //return scorePreload().andThen(autonSequence(moveBackwards(), moveLeft()));
-    return engageChargeStation();
+    //return scorePreload().andThen(initialAutonSequence(moveBackwards(), moveLeft())).andThen(chargeStationBalance());
+    //return engageChargeStation();
+    return m_pathChooser.getSelected();
+    //return chargeStationBalance();
+  }
+
+  public Command fullAutonCommand(int auton){
+    SmartDashboard.putNumber("You picked auton number ", auton);
+    if(auton == 1){
+      return scorePreload().andThen(initialAutonSequence(substationMoveBackwardsRed(), substationMoveLeftRed())).andThen(chargeStationBalance(1));
+    }
+    return scorePreload().andThen(initialAutonSequence(bumpMoveBackwardsRed(), bumpMoveRightRed())).andThen(chargeStationBalance(2));
+  }
+
+  public Command chargeStationBalance(int auton){
+    //if(auton == 1){
+      //return new ParallelRaceGroup(new SwerveControllerCommand(substationMoveForwardRed(), swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem), 
+      //engageChargeStation());
+    //}
+    return new ParallelRaceGroup(new SwerveControllerCommand(bumpMoveForwardRed(), swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem), 
+    engageChargeStation());
   }
 
   public Command scorePreload()
   {
     return new InstantCommand(()-> {m_ArmSubsystem.setLevel(2);}, m_ArmSubsystem)
-      .andThen(new WaitCommand(1))
-//    .andThen(new InstantCommand(()-> {m_ArmSubsystem.setLevel(2);}, m_ArmSubsystem))
-  //  .andThen(new InstantCommand(()-> {new WaitCommand(1);}))
-  //  //.andThen(new InstantCommand(()-> {m_IntakeSubsystem.testing();}, m_IntakeSubsystem))
+    .andThen(new WaitCommand(1))
     .andThen(new intakeCommand(m_IntakeSubsystem, 0.95))
-  .andThen(new WaitCommand(1))
-  .andThen(new InstantCommand(()-> {m_IntakeSubsystem.testing();}, m_IntakeSubsystem))
-  .andThen(new intakeCommand(m_IntakeSubsystem, 0))
-    ;
+    .andThen(new WaitCommand(1))
+    .andThen(new intakeCommand(m_IntakeSubsystem, 0));
   }
 
-  public Trajectory moveBackwards(){
-    double metersMovement = Units.inchesToMeters(160);
+
+  public Trajectory substationMoveForwardRed(){
+    double endPoint = Units.inchesToMeters(30);
     
-    TrajectoryConfig trajectoryConfig = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.3, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
+    TrajectoryConfig trajectoryConfig = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.2, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
+    Trajectory trajectory =
+    TrajectoryGenerator.generateTrajectory(
+      new Pose2d(Units.inchesToMeters(160), Units.inchesToMeters(80), new Rotation2d(0)),
+      List.of(new Translation2d(Units.inchesToMeters(130), Units.inchesToMeters(80)), new Translation2d(Units.inchesToMeters(100), Units.inchesToMeters(80))),
+      new Pose2d(endPoint, Units.inchesToMeters(80), new Rotation2d(0)),
+      trajectoryConfig);
+
+    return trajectory;
+  }
+
+
+  public Trajectory bumpMoveForwardRed(){
+    double endPoint = Units.inchesToMeters(30);
+    
+    TrajectoryConfig trajectoryConfig = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.2, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
+    Trajectory trajectory =
+    TrajectoryGenerator.generateTrajectory(
+      new Pose2d(Units.inchesToMeters(160), Units.inchesToMeters(-80), new Rotation2d(0)),
+      List.of(new Translation2d(Units.inchesToMeters(110), Units.inchesToMeters(-80)), new Translation2d(Units.inchesToMeters(60), Units.inchesToMeters(-80))),
+      new Pose2d(endPoint, Units.inchesToMeters(-80), new Rotation2d(0)),
+      trajectoryConfig);
+
+    return trajectory;
+  }
+
+  public Trajectory substationMoveBackwardsRed(){
+    double endPoint = Units.inchesToMeters(160);
+    
+    TrajectoryConfig trajectoryConfig = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.5, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
     Trajectory trajectory =
     TrajectoryGenerator.generateTrajectory(
       new Pose2d(0, 0, new Rotation2d(0)),
-      List.of(new Translation2d(metersMovement/4, 0), new Translation2d(2 * metersMovement/4, 0)),
-      new Pose2d(metersMovement, 0, new Rotation2d(0)),
+      List.of(new Translation2d(endPoint/4, 0), new Translation2d(2 * endPoint/4, 0)),
+      new Pose2d(endPoint, 0, new Rotation2d(0)),
       trajectoryConfig);
 
     return trajectory;
   }
 
-  public Trajectory moveLeft(){
-    double metersMovement = Units.inchesToMeters(80);
+  public Trajectory bumpMoveBackwardsRed(){
+    double endPoint = Units.inchesToMeters(160);
+    
+    TrajectoryConfig trajectoryConfig = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.5, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
+    Trajectory trajectory =
+    TrajectoryGenerator.generateTrajectory(
+      new Pose2d(0, 0, new Rotation2d(0)),
+      List.of(new Translation2d(Units.inchesToMeters(50), 0.33), new Translation2d(Units.inchesToMeters(100), 0.33)),
+      new Pose2d(endPoint, 0, new Rotation2d(0)),
+      trajectoryConfig);
+
+    return trajectory;
+  }
+
+  public Trajectory substationMoveLeftRed(){
+    double endPoint = Units.inchesToMeters(80);
   
-    TrajectoryConfig trajectoryConfig = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.3, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
+    TrajectoryConfig trajectoryConfig = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.5, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
     Trajectory trajectory =
     TrajectoryGenerator.generateTrajectory(
       new Pose2d(Units.inchesToMeters(160), 0, new Rotation2d(0)),
-      List.of(new Translation2d(Units.inchesToMeters(160), metersMovement/4), new Translation2d(Units.inchesToMeters(160), 2 * metersMovement/4)),
-      new Pose2d(Units.inchesToMeters(160), metersMovement, new Rotation2d(0)),
+      List.of(new Translation2d(Units.inchesToMeters(160), Units.inchesToMeters(30)), new Translation2d(Units.inchesToMeters(160), Units.inchesToMeters(60))),
+      new Pose2d(Units.inchesToMeters(160), endPoint, new Rotation2d(0)),
       trajectoryConfig);
 
     return trajectory;
   }
 
-  public Command autonSequence(Trajectory trajectory1, Trajectory trajectory2){
+  public Trajectory bumpMoveRightRed(){
+    double endPoint = Units.inchesToMeters(-80);
+  
+    TrajectoryConfig trajectoryConfig = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.5, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
+    Trajectory trajectory =
+    TrajectoryGenerator.generateTrajectory(
+      new Pose2d(Units.inchesToMeters(160), 0, new Rotation2d(0)),
+      List.of(new Translation2d(Units.inchesToMeters(160), Units.inchesToMeters(-30)), new Translation2d(Units.inchesToMeters(160), Units.inchesToMeters(-60))),
+      new Pose2d(Units.inchesToMeters(160), endPoint, new Rotation2d(0)),
+      trajectoryConfig);
+
+    return trajectory;
+  }
+
+  public Command initialAutonSequence(Trajectory trajectory1, Trajectory trajectory2){
     var trajectoryConcat = trajectory1.concatenate(trajectory2);
     var swerveControllerCommand = new SwerveControllerCommand(trajectoryConcat, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
 
     swerveSubsystem.resetOdometry(trajectory1.getInitialPose());
 
-    return swerveControllerCommand.andThen(() -> swerveSubsystem.stopModules());
+    return swerveControllerCommand;//.andThen(() -> swerveSubsystem.stopModules());
   }
 
   public Command engageChargeStation(){
@@ -281,7 +277,7 @@ public class RobotContainer {
     ()-> 
     {
       swerveSubsystem.startTickCount();
-      swerveSubsystem.driveSwerve(0, 0, -0.5, true);
+      //swerveSubsystem.driveSwerve(0, 0, -0.5, true);
       //-15, -5
     },
 
@@ -291,7 +287,7 @@ public class RobotContainer {
         if(swerveSubsystem.getPitch() <= -15){
           chargeStationState = 2;
         }
-        if(swerveSubsystem.getPitch() >= -5 && chargeStationState == 2){
+        if(swerveSubsystem.getPitch() >= -7 && chargeStationState == 2){
           chargeStationState = 3;
         }
         //swerveSubsystem.driveSwerve(0, 0, 0.5, false);
@@ -304,6 +300,6 @@ public class RobotContainer {
     },
 
     // end condition
-    ()-> swerveSubsystem.getTicks() >= 200000 || chargeStationState == 3);  //if tick sample is past a certain point or we have balanced
+    ()-> chargeStationState == 3);  //if we have balanced
   }
 }

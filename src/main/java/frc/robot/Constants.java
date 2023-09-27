@@ -14,7 +14,7 @@ public final class Constants {
 
     public static final class Arm{
         public static final int ARM_MOTOR_ID = 53;
-        public static final double ARM_GEAR_RATIO = 192;
+        public static final double ARM_GEAR_RA0TIO = 192;
         public static final int LEVEL_1_TICKS = 0;
         public static final int LEVEL_2_TICKS = 18432;
         public static final int LEVEL_3_TICKS = 28672;
