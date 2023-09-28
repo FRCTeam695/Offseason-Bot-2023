@@ -152,19 +152,20 @@ public class RobotContainer {
   public Command fullAutonCommand(int auton){
     SmartDashboard.putNumber("You picked auton number ", auton);
     if(auton == 1){
-      return scorePreload().andThen(initialAutonSequence(substationMoveBackwardsRed(), substationMoveLeftRed())).andThen(chargeStationBalance(1));
+      return scorePreload().andThen(substationSideRed()).andThen(new ParallelRaceGroup(moveToChargeStation(), engageChargeStation()));
     }
-    return scorePreload().andThen(initialAutonSequence(bumpMoveBackwardsRed(), bumpMoveRightRed())).andThen(chargeStationBalance(2));
-  }
+    return scorePreload().andThen(substationSideRed());  }
 
+    /*
   public Command chargeStationBalance(int auton){
-    //if(auton == 1){
-      //return new ParallelRaceGroup(new SwerveControllerCommand(substationMoveForwardRed(), swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem), 
-      //engageChargeStation());
-    //}
+    if(auton == 1){
+      return new ParallelRaceGroup(new SwerveControllerCommand(substationMoveForwardRed(), swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem), 
+      engageChargeStation());
+    }
     return new ParallelRaceGroup(new SwerveControllerCommand(bumpMoveForwardRed(), swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem), 
     engageChargeStation());
   }
+  */
 
   public Command scorePreload()
   {
@@ -175,6 +176,41 @@ public class RobotContainer {
     .andThen(new intakeCommand(m_IntakeSubsystem, 0));
   }
 
+  public Command substationSideRed(){
+    double endPoint = Units.inchesToMeters(160);
+    
+    TrajectoryConfig trajectoryConfig = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.5, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
+    Trajectory trajectory =
+    TrajectoryGenerator.generateTrajectory(
+      new Pose2d(0, 0, new Rotation2d(0)),
+      List.of(new Translation2d(Units.inchesToMeters(50), -0.3), new Translation2d(Units.inchesToMeters(160), 0)),
+      new Pose2d(endPoint, Units.inchesToMeters(70), new Rotation2d(0)),
+      trajectoryConfig);
+
+    swerveSubsystem.resetOdometry(trajectory.getInitialPose());
+
+    var swerveControllerCommand = new SwerveControllerCommand(trajectory, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
+  
+    return swerveControllerCommand.andThen(() -> swerveSubsystem.stopModules());
+  }
+
+  public Command moveToChargeStation(){
+    double endPoint = Units.inchesToMeters(30);
+    
+    TrajectoryConfig trajectoryConfig = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.2, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
+    trajectoryConfig.setReversed(true);
+    Trajectory trajectory =
+    TrajectoryGenerator.generateTrajectory(
+      List.of(
+      new Pose2d(Units.inchesToMeters(160), Units.inchesToMeters(70), new Rotation2d(0)),
+      new Pose2d(endPoint, Units.inchesToMeters(70), new Rotation2d(0))),
+      trajectoryConfig);
+
+    var swerveControllerCommand = new SwerveControllerCommand(trajectory, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
+  
+    return swerveControllerCommand.andThen(() -> swerveSubsystem.stopModules());
+  }
+  /*
 
   public Trajectory substationMoveForwardRed(){
     double endPoint = Units.inchesToMeters(30);
@@ -190,7 +226,6 @@ public class RobotContainer {
     return trajectory;
   }
 
-
   public Trajectory bumpMoveForwardRed(){
     double endPoint = Units.inchesToMeters(30);
     
@@ -198,14 +233,14 @@ public class RobotContainer {
     Trajectory trajectory =
     TrajectoryGenerator.generateTrajectory(
       new Pose2d(Units.inchesToMeters(160), Units.inchesToMeters(-80), new Rotation2d(0)),
-      List.of(new Translation2d(Units.inchesToMeters(110), Units.inchesToMeters(-80)), new Translation2d(Units.inchesToMeters(60), Units.inchesToMeters(-80))),
+      List.of(new Translation2d(Units.inchesToMeters(130), Units.inchesToMeters(-80)), new Translation2d(Units.inchesToMeters(100), Units.inchesToMeters(-80))),
       new Pose2d(endPoint, Units.inchesToMeters(-80), new Rotation2d(0)),
       trajectoryConfig);
 
     return trajectory;
   }
 
-  public Trajectory substationMoveBackwardsRed(){
+  public Trajectory SubstationMoveBackwardsRed(){
     double endPoint = Units.inchesToMeters(160);
     
     TrajectoryConfig trajectoryConfig = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.5, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
@@ -226,8 +261,8 @@ public class RobotContainer {
     Trajectory trajectory =
     TrajectoryGenerator.generateTrajectory(
       new Pose2d(0, 0, new Rotation2d(0)),
-      List.of(new Translation2d(Units.inchesToMeters(50), 0.33), new Translation2d(Units.inchesToMeters(100), 0.33)),
-      new Pose2d(endPoint, 0, new Rotation2d(0)),
+      List.of(new Translation2d(endPoint/4, 0.33), new Translation2d(2 * endPoint/4, 0.33)),
+      new Pose2d(endPoint, 0.33, new Rotation2d(0)),
       trajectoryConfig);
 
     return trajectory;
@@ -254,7 +289,7 @@ public class RobotContainer {
     Trajectory trajectory =
     TrajectoryGenerator.generateTrajectory(
       new Pose2d(Units.inchesToMeters(160), 0, new Rotation2d(0)),
-      List.of(new Translation2d(Units.inchesToMeters(160), Units.inchesToMeters(-30)), new Translation2d(Units.inchesToMeters(160), Units.inchesToMeters(-60))),
+      List.of(new Translation2d(Units.inchesToMeters(160), -Units.inchesToMeters(30)), new Translation2d(Units.inchesToMeters(160), -Units.inchesToMeters(60))),
       new Pose2d(Units.inchesToMeters(160), endPoint, new Rotation2d(0)),
       trajectoryConfig);
 
@@ -269,6 +304,7 @@ public class RobotContainer {
 
     return swerveControllerCommand;//.andThen(() -> swerveSubsystem.stopModules());
   }
+  */
 
   public Command engageChargeStation(){
     return new FunctionalCommand(
