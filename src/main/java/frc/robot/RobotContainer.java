@@ -4,14 +4,12 @@
 
 package frc.robot;
 
-import frc.robot.commands.Autos;
 import frc.robot.commands.SwerveDriveCommand;
 import frc.robot.commands.intakeCommand;
 import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
 import frc.robot.subsystems.intakeSubsystem;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -26,14 +24,11 @@ import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
-import edu.wpi.first.wpilibj2.command.button.POVButton;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.math.geometry.Pose2d;
 import java.util.List;
-import edu.wpi.first.math.trajectory.Trajectory;
 
 import java.util.function.DoubleSupplier;
 
@@ -76,8 +71,8 @@ public class RobotContainer {
     thetaController.enableContinuousInput(-Math.PI, -Math.PI);
     //m_pathChooser.setDefaultOption("Score Preload", scorePreload());
 
-    m_pathChooser.setDefaultOption("Cube/Balance/Left", fullAutonCommand(1));
-    m_pathChooser.addOption("Cube/Balance/Right", fullAutonCommand(2));
+    m_pathChooser.setDefaultOption("Cube/Balance/Substation", fullAutonCommand(2));
+    m_pathChooser.addOption("Cube/Balance/Bump", fullAutonCommand(1));
 
     SmartDashboard.putData("Auton Routine", m_pathChooser);
 
@@ -141,31 +136,21 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     swerveSubsystem.setRelativeTurnEncoderValue();
-    //return moveLeft();
-    //return scorePreload().andThen(moveBackwards()).andThen(moveLeft());
-    //return scorePreload().andThen(initialAutonSequence(moveBackwards(), moveLeft())).andThen(chargeStationBalance());
-    //return engageChargeStation();
+    System.out.println("I reached here");
     return m_pathChooser.getSelected();
-    //return chargeStationBalance();
   }
 
   public Command fullAutonCommand(int auton){
-    SmartDashboard.putNumber("You picked auton number ", auton);
+    System.out.println("Auton Number " + auton);
+    SmartDashboard.putNumber("Auton Number", auton);
     if(auton == 1){
-      return scorePreload().andThen(substationSideRed()).andThen(new ParallelRaceGroup(moveToChargeStation(), engageChargeStation()));
+      return scorePreload()
+      .andThen(substationSideRed()) //Gets to position infront of the charge station
+      .andThen(new ParallelRaceGroup(moveToChargeStation(), engageChargeStation())); //Moves robot over the charge station while checking if we have balancedw
     }
-    return scorePreload().andThen(substationSideRed());  }
-
-    /*
-  public Command chargeStationBalance(int auton){
-    if(auton == 1){
-      return new ParallelRaceGroup(new SwerveControllerCommand(substationMoveForwardRed(), swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem), 
-      engageChargeStation());
-    }
-    return new ParallelRaceGroup(new SwerveControllerCommand(bumpMoveForwardRed(), swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem), 
-    engageChargeStation());
-  }
-  */
+    return scorePreload()
+    .andThen(substationSideRed())
+    .andThen(new ParallelRaceGroup(moveToChargeStation(), engageChargeStation()));  }
 
   public Command scorePreload()
   {
@@ -210,111 +195,33 @@ public class RobotContainer {
   
     return swerveControllerCommand.andThen(() -> swerveSubsystem.stopModules());
   }
-  /*
 
-  public Trajectory substationMoveForwardRed(){
-    double endPoint = Units.inchesToMeters(30);
-    
-    TrajectoryConfig trajectoryConfig = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.2, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
-    Trajectory trajectory =
-    TrajectoryGenerator.generateTrajectory(
-      new Pose2d(Units.inchesToMeters(160), Units.inchesToMeters(80), new Rotation2d(0)),
-      List.of(new Translation2d(Units.inchesToMeters(130), Units.inchesToMeters(80)), new Translation2d(Units.inchesToMeters(100), Units.inchesToMeters(80))),
-      new Pose2d(endPoint, Units.inchesToMeters(80), new Rotation2d(0)),
-      trajectoryConfig);
-
-    return trajectory;
-  }
-
-  public Trajectory bumpMoveForwardRed(){
-    double endPoint = Units.inchesToMeters(30);
-    
-    TrajectoryConfig trajectoryConfig = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.2, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
-    Trajectory trajectory =
-    TrajectoryGenerator.generateTrajectory(
-      new Pose2d(Units.inchesToMeters(160), Units.inchesToMeters(-80), new Rotation2d(0)),
-      List.of(new Translation2d(Units.inchesToMeters(130), Units.inchesToMeters(-80)), new Translation2d(Units.inchesToMeters(100), Units.inchesToMeters(-80))),
-      new Pose2d(endPoint, Units.inchesToMeters(-80), new Rotation2d(0)),
-      trajectoryConfig);
-
-    return trajectory;
-  }
-
-  public Trajectory SubstationMoveBackwardsRed(){
+  public Command bumpSideRed(){
     double endPoint = Units.inchesToMeters(160);
     
     TrajectoryConfig trajectoryConfig = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.5, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
     Trajectory trajectory =
     TrajectoryGenerator.generateTrajectory(
-      new Pose2d(0, 0, new Rotation2d(0)),
-      List.of(new Translation2d(endPoint/4, 0), new Translation2d(2 * endPoint/4, 0)),
-      new Pose2d(endPoint, 0, new Rotation2d(0)),
+      new Pose2d(0, Units.inchesToMeters(140), new Rotation2d(0)),
+      List.of(new Translation2d(Units.inchesToMeters(50), Units.inchesToMeters(140) + 0.3), new Translation2d(Units.inchesToMeters(160), Units.inchesToMeters(140))),
+      new Pose2d(endPoint, Units.inchesToMeters(70), new Rotation2d(0)),
       trajectoryConfig);
 
-    return trajectory;
-  }
+    swerveSubsystem.resetOdometry(trajectory.getInitialPose());
 
-  public Trajectory bumpMoveBackwardsRed(){
-    double endPoint = Units.inchesToMeters(160);
-    
-    TrajectoryConfig trajectoryConfig = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.5, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
-    Trajectory trajectory =
-    TrajectoryGenerator.generateTrajectory(
-      new Pose2d(0, 0, new Rotation2d(0)),
-      List.of(new Translation2d(endPoint/4, 0.33), new Translation2d(2 * endPoint/4, 0.33)),
-      new Pose2d(endPoint, 0.33, new Rotation2d(0)),
-      trajectoryConfig);
-
-    return trajectory;
-  }
-
-  public Trajectory substationMoveLeftRed(){
-    double endPoint = Units.inchesToMeters(80);
+    var swerveControllerCommand = new SwerveControllerCommand(trajectory, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
   
-    TrajectoryConfig trajectoryConfig = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.5, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
-    Trajectory trajectory =
-    TrajectoryGenerator.generateTrajectory(
-      new Pose2d(Units.inchesToMeters(160), 0, new Rotation2d(0)),
-      List.of(new Translation2d(Units.inchesToMeters(160), Units.inchesToMeters(30)), new Translation2d(Units.inchesToMeters(160), Units.inchesToMeters(60))),
-      new Pose2d(Units.inchesToMeters(160), endPoint, new Rotation2d(0)),
-      trajectoryConfig);
-
-    return trajectory;
+    return swerveControllerCommand.andThen(() -> swerveSubsystem.stopModules());
   }
-
-  public Trajectory bumpMoveRightRed(){
-    double endPoint = Units.inchesToMeters(-80);
-  
-    TrajectoryConfig trajectoryConfig = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.5, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
-    Trajectory trajectory =
-    TrajectoryGenerator.generateTrajectory(
-      new Pose2d(Units.inchesToMeters(160), 0, new Rotation2d(0)),
-      List.of(new Translation2d(Units.inchesToMeters(160), -Units.inchesToMeters(30)), new Translation2d(Units.inchesToMeters(160), -Units.inchesToMeters(60))),
-      new Pose2d(Units.inchesToMeters(160), endPoint, new Rotation2d(0)),
-      trajectoryConfig);
-
-    return trajectory;
-  }
-
-  public Command initialAutonSequence(Trajectory trajectory1, Trajectory trajectory2){
-    var trajectoryConcat = trajectory1.concatenate(trajectory2);
-    var swerveControllerCommand = new SwerveControllerCommand(trajectoryConcat, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
-
-    swerveSubsystem.resetOdometry(trajectory1.getInitialPose());
-
-    return swerveControllerCommand;//.andThen(() -> swerveSubsystem.stopModules());
-  }
-  */
 
   public Command engageChargeStation(){
+    //Constantly checks to see if we have balanced
     return new FunctionalCommand(
 
     // init
     ()-> 
     {
       swerveSubsystem.startTickCount();
-      //swerveSubsystem.driveSwerve(0, 0, -0.5, true);
-      //-15, -5
     },
 
     // execute
@@ -326,7 +233,6 @@ public class RobotContainer {
         if(swerveSubsystem.getPitch() >= -7 && chargeStationState == 2){
           chargeStationState = 3;
         }
-        //swerveSubsystem.driveSwerve(0, 0, 0.5, false);
     },
 
     // end
