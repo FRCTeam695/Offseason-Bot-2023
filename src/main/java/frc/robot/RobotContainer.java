@@ -156,7 +156,7 @@ public class RobotContainer {
     System.out.println("Running bump side auton");
     if(DriverStation.getAlliance() == DriverStation.Alliance.Blue){
       return scorePreload()
-      .andThen(bumpSideRed()) //Gets to position infront of the charge station
+      .andThen(substationSideRed()) //Gets to position infront of the charge station
       .andThen(new ParallelRaceGroup(moveToChargeStation(), engageChargeStation()));
     }
     return scorePreload()
