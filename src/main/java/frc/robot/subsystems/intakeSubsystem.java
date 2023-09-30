@@ -86,7 +86,19 @@ public class intakeSubsystem extends SubsystemBase{
     }
 
     public void testing(){
-        System.out.println("Running intake");
+        System.out.println("Running Substation Side Auto!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    }
+
+    public void testing2(){
+        System.out.println("Running Bump Side Auto!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    }
+
+    public void testingSendableChooser(){
+        System.out.println("SUBSTATION SENDABLE CHOOSER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    }
+
+    public void testingSendableChooser2(){
+        System.out.println("BUMP SENDABLE CHOOSER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
     }
 
     private void setMotors(double speed){
@@ -131,8 +143,9 @@ public class intakeSubsystem extends SubsystemBase{
 
             if (stallTimer.get() > Constants.Intake.stallTimeout) {
                 if (Math.abs(currentPosition1 - lastPosition1) < 2 || Math.abs(currentPosition2 - lastPosition2) < 2) {
-                    intakeMotor1.setSmartCurrentLimit(3);
-                    intakeMotor2.setSmartCurrentLimit(3);
+                    intakeMotor1.setSmartCurrentLimit(2);
+                    intakeMotor2.setSmartCurrentLimit(2);
+                    //System.out.println("Stalling!");
                     stallHold = true;
                 }
 

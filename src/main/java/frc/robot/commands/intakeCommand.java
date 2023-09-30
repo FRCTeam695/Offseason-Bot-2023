@@ -4,6 +4,7 @@
 
 package frc.robot.commands;
 
+import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.intakeSubsystem;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.CommandBase;
@@ -12,18 +13,24 @@ import edu.wpi.first.wpilibj2.command.CommandBase;
 public class intakeCommand extends CommandBase {
 
   private final intakeSubsystem subsystem;  
+  private final ArmSubsystem armSubsystem;
   private double speed;
 
-  public intakeCommand(intakeSubsystem subsystem, double speed) {
+  public intakeCommand(intakeSubsystem subsystem, ArmSubsystem armSubsystem, double speed) {
     this.subsystem = subsystem;
     this.speed = speed;
+    this.armSubsystem = armSubsystem;
 
     addRequirements(subsystem);
   }
 
   // Called when the command is initially scheduled.
   @Override
-  public void initialize() {}
+  public void initialize() {
+    if(speed < 0){
+      armSubsystem.setLevel(1);
+    }
+  }
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
@@ -35,7 +42,10 @@ public class intakeCommand extends CommandBase {
   @Override
   public void end(boolean interrupted) {
     if(!DriverStation.isAutonomous()){
-      subsystem.stop();
+      armSubsystem.setLevel(2);
+      if(speed >= 0){
+        subsystem.stop();
+      }
     }
   }
 

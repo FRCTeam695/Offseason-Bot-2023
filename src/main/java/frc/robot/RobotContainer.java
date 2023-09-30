@@ -61,6 +61,7 @@ public class RobotContainer {
   private final DoubleSupplier right_xAxis = () -> (controller.getRawAxis(4));
 
   private int chargeStationState = 1;
+  public int alliance;
   
   private PIDController xController = new PIDController(1, 0, 0);
   private PIDController yController = new PIDController(1, 0, 0);
@@ -72,10 +73,14 @@ public class RobotContainer {
     thetaController.enableContinuousInput(-Math.PI, -Math.PI);
     //m_pathChooser.setDefaultOption("Score Preload", scorePreload());
 
-    m_pathChooser.setDefaultOption("Cube/Balance/Substation", substationSideCommand());
-    m_pathChooser.addOption("Cube/Balance/Bump", bumpSideCommand());
+    m_pathChooser.setDefaultOption("Cube/Balance/Substation", substationSideCommandWrapper());
+    m_pathChooser.addOption("Cube/Balance/Bump", bumpSideCommandWrapper());
 
     SmartDashboard.putData("Auton Routine", m_pathChooser);
+
+    xController.reset();
+    yController.reset();
+    thetaController.reset(null);
 
     configureBindings();
     instantCommands();
@@ -83,38 +88,13 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
-//    leftBumper.whileTrue(new intakeCommand(m_IntakeSubsystem, -0.25)); // intake the cube
-    rightBumper.whileTrue(new intakeCommand(m_IntakeSubsystem, 0.05)); //outtake the cube, lower level
-    a_Button.whileTrue(new intakeCommand(m_IntakeSubsystem, 0.95)); //blast outtake the cube, high level
-    b_Button.whileTrue(new intakeCommand(m_IntakeSubsystem, 0.25)); //outtake, mid level
+    leftBumper.whileTrue(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem,-0.25)); // intake the cube
+    rightBumper.whileTrue(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, 0.15)); //outtake the cube, lower level
+    a_Button.whileTrue(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, 0.95)); //blast outtake the cube, high level
+    b_Button.whileTrue(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, 0.25)); //outtake, mid level
   }
 
   private void instantCommands() {
-    
-    leftBumper.whileTrue(
-        new FunctionalCommand(
-  
-          // init
-          ()-> 
-          {
-            m_ArmSubsystem.setLevel(1);
-          },
-  
-          // execute
-          ()-> 
-          {
-            m_IntakeSubsystem.runIntake(-0.25);
-          },
-  
-          // end
-          interrupted-> 
-          {
-            m_ArmSubsystem.setLevel(2);
-            m_IntakeSubsystem.runIntake(0);
-          },
-  
-          // end condition
-          ()-> false));
     
 
     back_Button.onTrue(new InstantCommand(()-> {swerveSubsystem.zeroHeading();}, swerveSubsystem));
@@ -140,37 +120,57 @@ public class RobotContainer {
     return m_pathChooser.getSelected();
   }
 
+  public Command substationSideCommandWrapper(){
+    return substationSideCommand();
+  }
+
+  public Command bumpSideCommandWrapper(){
+    return bumpSideCommand();
+  }
+
   public Command substationSideCommand(){
-    System.out.println("Running substation side auton");
+    System.out.println(DriverStation.getAlliance());
     if(DriverStation.getAlliance() == DriverStation.Alliance.Red){
       return scorePreload()
+      .andThen(new InstantCommand(()-> {m_IntakeSubsystem.testing();}, m_IntakeSubsystem))
+      .andThen(new InstantCommand(()-> {m_IntakeSubsystem.testingSendableChooser();}, m_IntakeSubsystem))
       .andThen(substationSideRed()) //Gets to position infront of the charge station
       .andThen(new ParallelRaceGroup(moveToChargeStation(), engageChargeStation()));
-    }
-    return scorePreload()
+    }else{
+      return scorePreload()
+    .andThen(new InstantCommand(()-> {m_IntakeSubsystem.testing2();}, m_IntakeSubsystem))
+    .andThen(new InstantCommand(()-> {m_IntakeSubsystem.testingSendableChooser();}, m_IntakeSubsystem))
     .andThen(bumpSideRed()) //Gets to position infront of the charge station
     .andThen(new ParallelRaceGroup(moveToChargeStation(), engageChargeStation()));
+    }
   }
 
   public Command bumpSideCommand(){
-    System.out.println("Running bump side auton");
+    System.out.println(DriverStation.getAlliance());
+
     if(DriverStation.getAlliance() == DriverStation.Alliance.Blue){
       return scorePreload()
+      .andThen(new InstantCommand(()-> {m_IntakeSubsystem.testing();}, m_IntakeSubsystem))
+      .andThen(new InstantCommand(()-> {m_IntakeSubsystem.testingSendableChooser2();}, m_IntakeSubsystem))
       .andThen(substationSideRed()) //Gets to position infront of the charge station
       .andThen(new ParallelRaceGroup(moveToChargeStation(), engageChargeStation()));
     }
-    return scorePreload()
+    else{
+      return scorePreload()
+    .andThen(new InstantCommand(()-> {m_IntakeSubsystem.testing2();}, m_IntakeSubsystem))
+    .andThen(new InstantCommand(()-> {m_IntakeSubsystem.testingSendableChooser2();}, m_IntakeSubsystem))
     .andThen(bumpSideRed()) //Gets to position infront of the charge station
     .andThen(new ParallelRaceGroup(moveToChargeStation(), engageChargeStation()));
+    }
   }
 
   public Command scorePreload()
   {
     return new InstantCommand(()-> {m_ArmSubsystem.setLevel(2);}, m_ArmSubsystem)
     .andThen(new WaitCommand(1))
-    .andThen(new intakeCommand(m_IntakeSubsystem, 0.95))
+    .andThen(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, 0.95))
     .andThen(new WaitCommand(1))
-    .andThen(new intakeCommand(m_IntakeSubsystem, 0));
+    .andThen(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, 0));
   }
 
   public Command substationSideRed(){
@@ -188,7 +188,7 @@ public class RobotContainer {
 
     var swerveControllerCommand = new SwerveControllerCommand(trajectory1, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
   
-    return swerveControllerCommand.andThen(() -> swerveSubsystem.stopModules());
+    return new InstantCommand(()-> {swerveSubsystem.resetOdometry(trajectory1.getInitialPose());}, swerveSubsystem).andThen(swerveControllerCommand).andThen(() -> swerveSubsystem.stopModules());
   }
 
   public Command moveToChargeStation(){
@@ -219,12 +219,14 @@ public class RobotContainer {
       new Pose2d(endPoint, Units.inchesToMeters(70), new Rotation2d(0)),
       trajectoryConfig3);
 
-    swerveSubsystem.resetOdometry(trajectory3.getInitialPose());
+    //swerveSubsystem.resetOdometry(trajectory3.getInitialPose());
 
     var swerveControllerCommand = new SwerveControllerCommand(trajectory3, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
   
-    return swerveControllerCommand.andThen(() -> swerveSubsystem.stopModules());
+    return new InstantCommand(()-> {swerveSubsystem.resetOdometry(trajectory3.getInitialPose());}, swerveSubsystem).andThen(swerveControllerCommand).andThen(() -> swerveSubsystem.stopModules());
   }
+
+  
 
   public Command engageChargeStation(){
     //Constantly checks to see if we have balanced
@@ -242,7 +244,7 @@ public class RobotContainer {
         if(swerveSubsystem.getPitch() <= -15){
           chargeStationState = 2;
         }
-        if(swerveSubsystem.getPitch() >= -7 && chargeStationState == 2){
+        if(swerveSubsystem.getPitch() >= -9 && chargeStationState == 2){
           chargeStationState = 3;
         }
     },

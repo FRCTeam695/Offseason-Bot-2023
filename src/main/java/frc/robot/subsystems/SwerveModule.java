@@ -39,18 +39,18 @@ public class SwerveModule{
         falconlimit.triggerThresholdCurrent = 20;
         falconlimit.triggerThresholdTime = 0;
 
-        driveMotor = new TalonFX(driveMotorId);
+        driveMotor = new TalonFX(driveMotorId, "drivetrain");
         driveMotor.configFactoryDefault();
         driveMotor.setNeutralMode(NeutralMode.Brake);
         driveMotor.configSupplyCurrentLimit(falconlimit);
 
-        turnMotor = new TalonFX(turnMotorId);
+        turnMotor = new TalonFX(turnMotorId, "drivetrain");
         turnMotor.configFactoryDefault();
         turnMotor.setNeutralMode(NeutralMode.Brake);
         turnMotor.configSupplyCurrentLimit(falconlimit);
 
 
-        absoluteEncoder = new WPI_CANCoder(TurnCANCoderId);
+        absoluteEncoder = new WPI_CANCoder(TurnCANCoderId, "drivetrain");
 
         driveMotor.setInverted(driveMotorReversed);
 
