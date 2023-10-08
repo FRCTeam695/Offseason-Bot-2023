@@ -57,9 +57,9 @@ public class SwerveDriveCommand extends CommandBase {
     Double Zj = -1 * turningSpeed.getAsDouble(); //Inverted because WPIlib coordinate system is weird, link to docs below
 
     //Calculate difference between expected turn and real-time turn
-    double diff = (previousZj - Zj) * 180 - (previousAngle - m_Subsystem.getHeading()) ;
-    double turningOffset = MathUtil.clamp(diff, -180, 180);
-    double zRes = Zj + turningOffset;
+    double diff = (previousZj - Zj) - (previousAngle - m_Subsystem.getHeading()) / 360 ;
+    double turningOffset = MathUtil.clamp(diff, -1, 1);
+    double zRes = Zj - turningOffset;
 
     SmartDashboard.putNumber("X", Xj);
     SmartDashboard.putNumber("Y", Yj);
@@ -70,7 +70,12 @@ public class SwerveDriveCommand extends CommandBase {
     
     SmartDashboard.putNumber("Ticks", m_Subsystem.getTicks());
 
-    m_Subsystem.driveSwerve(Xj, zRes, Yj, fieldOriented);
+    //Update Z and gyro values
+    previousAngle = m_Subsystem.getHeading();
+    previousZj = Zj;
+
+
+    m_Subsystem.driveSwerve(Xj, Zj, Yj, fieldOriented);
   }
 
   // Called once the command ends or is interrupted.

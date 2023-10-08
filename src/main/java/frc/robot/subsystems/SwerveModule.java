@@ -171,7 +171,7 @@ public class SwerveModule{
         setPoint = radians;  //Before this line is executed setPoint is equal to 7
         turnMotor.setSelectedSensorPosition(desired_ticks);
     }
-
+    
     public double getDriveTicks(){
         return driveMotor.getSelectedSensorPosition();
     }

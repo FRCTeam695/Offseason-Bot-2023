@@ -6,6 +6,8 @@ package frc.robot;
 
 import frc.robot.commands.SwerveDriveCommand;
 import frc.robot.commands.intakeCommand;
+import frc.robot.paths.PathPicker;
+import frc.robot.Constants.Auton.Path;
 import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
 import frc.robot.subsystems.intakeSubsystem;
@@ -67,6 +69,8 @@ public class RobotContainer {
   private PIDController yController = new PIDController(1, 0, 0);
   private ProfiledPIDController thetaController = new ProfiledPIDController(Constants.SummerSwerve.PROFILED_KP_VALUE, 0, 0, Constants.SummerSwerve.TRAPEZOID_THETA_CONSTRAINTS);
 
+  private final PathPicker pathPicker = new PathPicker();
+
   SendableChooser<Command> m_pathChooser = new SendableChooser<>();
 
   public RobotContainer() {
@@ -75,6 +79,8 @@ public class RobotContainer {
 
     m_pathChooser.setDefaultOption("Cube/Balance/Substation", substationSideCommandWrapper());
     m_pathChooser.addOption("Cube/Balance/Bump", bumpSideCommandWrapper());
+    m_pathChooser.addOption("Score Preload", scorePreload());
+    m_pathChooser.addOption("Score/Leave", getAutonomousCommand());
 
     SmartDashboard.putData("Auton Routine", m_pathChooser);
 
@@ -118,6 +124,15 @@ public class RobotContainer {
   public Command getAutonomousCommand() {
     swerveSubsystem.setRelativeTurnEncoderValue();
     return m_pathChooser.getSelected();
+  }
+
+  public Command scoreLeaveCommunity(){
+    if(DriverStation.getAlliance() == DriverStation.Alliance.Red){
+      return scorePreload().andThen(moveOutCommunityRed());
+    }
+    else{
+      return scorePreload().andThen(moveOutCommunityBlue());
+    }
   }
 
   public Command substationSideCommandWrapper(){
@@ -174,17 +189,8 @@ public class RobotContainer {
   }
 
   public Command substationSideRed(){
-    double endPoint = Units.inchesToMeters(160);
     
-    TrajectoryConfig trajectoryConfig1 = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.5, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
-    Trajectory trajectory1 =
-    TrajectoryGenerator.generateTrajectory(
-      new Pose2d(0, 0, new Rotation2d(0)),
-      List.of(new Translation2d(Units.inchesToMeters(50), -0.3), new Translation2d(Units.inchesToMeters(160), 0)),
-      new Pose2d(endPoint, Units.inchesToMeters(70), new Rotation2d(0)),
-      trajectoryConfig1);
-
-    swerveSubsystem.resetOdometry(trajectory1.getInitialPose());
+    Trajectory trajectory1 = pathPicker.getTrajectory(Path.SUBSTATION_RED);
 
     var swerveControllerCommand = new SwerveControllerCommand(trajectory1, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
   
@@ -192,16 +198,7 @@ public class RobotContainer {
   }
 
   public Command moveToChargeStation(){
-    double endPoint = Units.inchesToMeters(30);
-    
-    TrajectoryConfig trajectoryConfig2 = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.2, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
-    trajectoryConfig2.setReversed(true);
-    Trajectory trajectory2 =
-    TrajectoryGenerator.generateTrajectory(
-      List.of(
-      new Pose2d(Units.inchesToMeters(160), Units.inchesToMeters(70), new Rotation2d(0)),
-      new Pose2d(endPoint, Units.inchesToMeters(70), new Rotation2d(0))),
-      trajectoryConfig2);
+    Trajectory trajectory2 = pathPicker.getTrajectory(Path.MOVE_TO_CHARGE_STATION);
 
     var swerveControllerCommand = new SwerveControllerCommand(trajectory2, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
   
@@ -209,23 +206,29 @@ public class RobotContainer {
   }
 
   public Command bumpSideRed(){
-    double endPoint = Units.inchesToMeters(160);
-    
-    TrajectoryConfig trajectoryConfig3 = new TrajectoryConfig(Constants.SummerSwerve.MAX_SPEED_METERS_PER_SECONDS * 0.5, Constants.SummerSwerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED).setKinematics(Constants.SummerSwerve.kDriveKinematics);
-    Trajectory trajectory3 =
-    TrajectoryGenerator.generateTrajectory(
-      new Pose2d(0, Units.inchesToMeters(140), new Rotation2d(0)),
-      List.of(new Translation2d(Units.inchesToMeters(50), Units.inchesToMeters(140) + 0.3), new Translation2d(Units.inchesToMeters(160), Units.inchesToMeters(140))),
-      new Pose2d(endPoint, Units.inchesToMeters(70), new Rotation2d(0)),
-      trajectoryConfig3);
-
-    //swerveSubsystem.resetOdometry(trajectory3.getInitialPose());
+    Trajectory trajectory3 = pathPicker.getTrajectory(Path.BUMP_RED);
 
     var swerveControllerCommand = new SwerveControllerCommand(trajectory3, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
   
     return new InstantCommand(()-> {swerveSubsystem.resetOdometry(trajectory3.getInitialPose());}, swerveSubsystem).andThen(swerveControllerCommand).andThen(() -> swerveSubsystem.stopModules());
   }
 
+  public Command moveOutCommunityRed(){
+    
+    Trajectory trajectory1 = pathPicker.getTrajectory(Path.MOVE_OUT_COMMUNITY_RED);
+
+    var swerveControllerCommand = new SwerveControllerCommand(trajectory1, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
+  
+    return new InstantCommand(()-> {swerveSubsystem.resetOdometry(trajectory1.getInitialPose());}, swerveSubsystem).andThen(swerveControllerCommand).andThen(() -> swerveSubsystem.stopModules());
+  }
+
+  public Command moveOutCommunityBlue(){
+    Trajectory trajectory1 = pathPicker.getTrajectory(Path.MOVE_OUT_COMMUNITY_BLUE);
+
+    var swerveControllerCommand = new SwerveControllerCommand(trajectory1, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
+  
+    return new InstantCommand(()-> {swerveSubsystem.resetOdometry(trajectory1.getInitialPose());}, swerveSubsystem).andThen(swerveControllerCommand).andThen(() -> swerveSubsystem.stopModules());
+  }
   
 
   public Command engageChargeStation(){
@@ -244,7 +247,7 @@ public class RobotContainer {
         if(swerveSubsystem.getPitch() <= -15){
           chargeStationState = 2;
         }
-        if(swerveSubsystem.getPitch() >= -9 && chargeStationState == 2){
+        if(swerveSubsystem.getPitch() >= -10 && chargeStationState == 2){
           chargeStationState = 3;
         }
     },

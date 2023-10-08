@@ -6,6 +6,17 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 
 public final class Constants {
+    
+    public static final class Auton{
+        public static enum Path {
+            SUBSTATION_RED,
+            BUMP_RED,
+            MOVE_OUT_COMMUNITY_RED,
+            MOVE_TO_CHARGE_STATION,
+            MOVE_OUT_COMMUNITY_BLUE
+          }
+    }
+
     public static final class Intake{
         public static final double stallTimeout = 0.5;
         public static final int MOTOR_1_ID = 52;
