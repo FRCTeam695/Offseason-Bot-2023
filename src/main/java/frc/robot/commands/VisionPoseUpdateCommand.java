@@ -42,12 +42,13 @@ public class VisionPoseUpdateCommand extends CommandBase {
     Pose2d currentPose2d;
     currentPose3d = visionSubsystem.getPose();
     currentPose2d = currentPose3d.toPose2d();
+    
     if(currentPose2d == null){
         return;
     }
+
     swerveSubsystem.resetOdometry(currentPose2d);
     swerveSubsystem.resetDriveMotorEncoders();
-    
   }
 
   // Called once the command ends or is interrupted.

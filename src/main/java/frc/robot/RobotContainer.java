@@ -6,10 +6,12 @@ package frc.robot;
 
 import frc.robot.commands.SwerveDriveCommand;
 import frc.robot.commands.intakeCommand;
+import frc.robot.commands.VisionPoseUpdateCommand;
 import frc.robot.paths.PathPicker;
 import frc.robot.Constants.Auton.Path;
 import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
+import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.intakeSubsystem;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.trajectory.Trajectory;
@@ -18,8 +20,6 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
@@ -27,11 +27,6 @@ import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
-import edu.wpi.first.math.trajectory.TrajectoryConfig;
-import edu.wpi.first.math.trajectory.TrajectoryGenerator;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.math.geometry.Pose2d;
-import java.util.List;
 
 import java.util.function.DoubleSupplier;
 
@@ -45,6 +40,7 @@ public class RobotContainer {
   private final SwerveSubsystem swerveSubsystem = new SwerveSubsystem();
   private final intakeSubsystem m_IntakeSubsystem = new intakeSubsystem();
   private final ArmSubsystem m_ArmSubsystem = new ArmSubsystem();
+  private final VisionSubsystem m_VisionSubsystem = new VisionSubsystem();
   private final XboxController controller = new XboxController(0);
 
   private final JoystickButton leftBumper = new JoystickButton(controller, 5);
@@ -101,18 +97,13 @@ public class RobotContainer {
   }
 
   private void instantCommands() {
-    
-
     back_Button.onTrue(new InstantCommand(()-> {swerveSubsystem.zeroHeading();}, swerveSubsystem));
-
-    
     x_Button.onTrue(new InstantCommand(()-> {m_ArmSubsystem.setLevel(1);}, m_ArmSubsystem));
-    
     y_Button.onTrue(new InstantCommand(()-> {m_ArmSubsystem.setLevel(2);}, m_ArmSubsystem));
-
   }
 
   private void defaultCommands() {
+    m_VisionSubsystem.setDefaultCommand(new VisionPoseUpdateCommand(m_VisionSubsystem, swerveSubsystem));
     swerveSubsystem.setDefaultCommand(new SwerveDriveCommand(swerveSubsystem, left_xAxis, left_yAxis, right_xAxis, true));
   }
 
