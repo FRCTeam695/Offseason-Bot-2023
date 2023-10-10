@@ -6,6 +6,13 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 
 public final class Constants {
+
+    public static final class Vision{
+        public static final double CAMERA_HEIGHT_METERS = 0.0;
+        public static final double CAMERA_TO_ROBOT_OFFSET_FORWARD = 0.0;
+        public static final String CAMERA_NAME = "USB_2.0_1080P_Camera";
+        public static final String ROBORIO_IP = "[10.6.95.12]";
+    }
     
     public static final class Auton{
         public static enum Path {
