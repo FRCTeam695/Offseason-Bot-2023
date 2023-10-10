@@ -141,6 +141,10 @@ public class SwerveModule{
         //return new SwerveModulePosition(getDriveVelocity(), getState().angle);
     }
 
+    public void zeroDrivePosition(){
+        driveMotor.setSelectedSensorPosition(0);
+    }
+
     public void setDesiredState(SwerveModuleState state, int motor) {
         if (Math.abs(state.speedMetersPerSecond) < 0.1){
            stop();

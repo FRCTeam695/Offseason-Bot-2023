@@ -163,6 +163,13 @@ public class SwerveSubsystem extends SubsystemBase {
         }
     }
 
+    public void resetDriveMotorEncoders(){
+        frontRight.zeroDrivePosition();
+        frontLeft.zeroDrivePosition();
+        bottomLeft.zeroDrivePosition();
+        bottomRight.zeroDrivePosition();
+    }
+
     public void setRelativeTurnEncoderValue() {
         // Uses the absolute encoder value to set relative encoders
         frontRight.setTurnEncoder(frontRight.getAbsoluteEncoderRadians());
