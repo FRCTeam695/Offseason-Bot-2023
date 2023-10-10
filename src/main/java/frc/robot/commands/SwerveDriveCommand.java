@@ -5,6 +5,7 @@
 package frc.robot.commands;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
@@ -19,6 +20,7 @@ public class SwerveDriveCommand extends CommandBase {
   private final SwerveSubsystem m_Subsystem;
   private final DoubleSupplier xSpeed, ySpeed, turningSpeed;
   private final boolean fieldOriented;
+  private final PIDController thetaController;
   private double previousAngle; //-180 to 180
   private double previousZj; // -1 to 1
 
@@ -32,6 +34,7 @@ public class SwerveDriveCommand extends CommandBase {
     previousZj = turningSpeed.getAsDouble();
 
     m_Subsystem.startTickCount();
+    thetaController = new PIDController(0.5, 0, 0);
 
     addRequirements(subsystem);
   }
@@ -56,17 +59,24 @@ public class SwerveDriveCommand extends CommandBase {
     Double Yj = -1 * ySpeed.getAsDouble(); //The controller is inverted
     Double Zj = -1 * turningSpeed.getAsDouble(); //Inverted because WPIlib coordinate system is weird, link to docs below
 
+    //Accounts for robot drift
+    double deltaZj = previousZj - Zj;
+
+    if((Math.abs(deltaZj) < 0.1) && (Zj < 0.01)){
+      Zj = MathUtil.clamp(thetaController.calculate(m_Subsystem.getHeading(), previousAngle), -1, 1);
+    }
+
     //Calculate difference between expected turn and real-time turn
-    double diff = (previousZj - Zj) - (previousAngle - m_Subsystem.getHeading()) / 360 ;
-    double turningOffset = MathUtil.clamp(diff, -1, 1);
-    double zRes = Zj - turningOffset;
+    //double diff = (previousZj - Zj) - (previousAngle - m_Subsystem.getHeading()) / 360 ;
+    //double turningOffset = MathUtil.clamp(diff, -1, 1);
+    //double zRes = Zj - turningOffset;
 
     SmartDashboard.putNumber("X", Xj);
     SmartDashboard.putNumber("Y", Yj);
     SmartDashboard.putNumber("Z", Zj);
-    SmartDashboard.putNumber("Difference", diff);
-    SmartDashboard.putNumber("Turn offset", turningOffset);
-    SmartDashboard.putNumber("zRes", zRes);
+    //SmartDashboard.putNumber("Difference", diff);
+    //SmartDashboard.putNumber("Turn offset", turningOffset);
+    //SmartDashboard.putNumber("zRes", zRes);
     
     SmartDashboard.putNumber("Ticks", m_Subsystem.getTicks());
 
