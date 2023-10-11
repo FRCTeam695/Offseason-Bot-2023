@@ -14,13 +14,14 @@ public final class Constants {
         public static final String ROBORIO_IP = "[10.6.95.12]";
     }
     
-    public static final class Auton{
+    public static final class Paths{
         public static enum Path {
             SUBSTATION_RED,
             BUMP_RED,
             MOVE_OUT_COMMUNITY_RED,
             MOVE_TO_CHARGE_STATION,
-            MOVE_OUT_COMMUNITY_BLUE
+            MOVE_OUT_COMMUNITY_BLUE,
+            MOVE_TO_CUBE
           }
     }
 

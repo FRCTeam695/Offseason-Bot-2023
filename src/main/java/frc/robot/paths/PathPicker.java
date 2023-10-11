@@ -1,6 +1,8 @@
 package frc.robot.paths;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
-import frc.robot.Constants.Auton.Path;
+import frc.robot.Constants.Paths.Path;
 
 public class PathPicker {
 
@@ -15,9 +17,13 @@ public class PathPicker {
             case MOVE_TO_CHARGE_STATION:
                 return MoveToChargeStation.getTrajectory();
             case MOVE_OUT_COMMUNITY_BLUE:
-                return null;
+                return DoNothing.getTrajectory(); //Maybe finish this later
             default:
                 return DoNothing.getTrajectory();
         }
+    }
+
+    public Trajectory getTrajectory(Path path, Translation2d cubeTranslation, Pose2d robotPose){
+        return GoToCube.getTrajectory(cubeTranslation, robotPose);
     }
 }

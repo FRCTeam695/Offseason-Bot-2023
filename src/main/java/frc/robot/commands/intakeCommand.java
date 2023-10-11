@@ -9,7 +9,7 @@ import frc.robot.subsystems.intakeSubsystem;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 
-/** An example command that uses an example subsystem. */
+/** intakeCommand lowers the arm and then runs the intake untill a stall, then raises the arm*/
 public class intakeCommand extends CommandBase {
 
   private final intakeSubsystem subsystem;  

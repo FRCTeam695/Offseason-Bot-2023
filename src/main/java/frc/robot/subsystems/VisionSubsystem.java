@@ -26,6 +26,7 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 // import edu.wpi.first.networktables.NetworkTableInstance;
 
@@ -82,6 +83,10 @@ public class VisionSubsystem extends SubsystemBase {
         }
 
         return null;
+    }
+
+    public Translation2d getCubeLocation(){
+        return new Translation2d();
     }
 
     public Pose3d getPose() {

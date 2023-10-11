@@ -8,7 +8,7 @@ import frc.robot.commands.SwerveDriveCommand;
 import frc.robot.commands.intakeCommand;
 import frc.robot.commands.VisionPoseUpdateCommand;
 import frc.robot.paths.PathPicker;
-import frc.robot.Constants.Auton.Path;
+import frc.robot.Constants.Paths.Path;
 import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
@@ -20,8 +20,11 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
@@ -93,7 +96,8 @@ public class RobotContainer {
     leftBumper.whileTrue(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem,-0.25)); // intake the cube
     rightBumper.whileTrue(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, 0.15)); //outtake the cube, lower level
     a_Button.whileTrue(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, 0.95)); //blast outtake the cube, high level
-    b_Button.whileTrue(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, 0.25)); //outtake, mid level
+    b_Button.whileTrue(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, 0.25)); //outtake, mid level 
+    //new ParallelRaceGroup(goToCubeCommand(), new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, -0.25));  //GET THIS WORKING WITH NETWORKTABLE BUTTON
   }
 
   private void instantCommands() {
@@ -112,6 +116,15 @@ public class RobotContainer {
    *
    * @return the command to run in autonomous
    */
+  
+  public Command goToCubeCommand() {
+    Trajectory trajectory = pathPicker.getTrajectory(Path.MOVE_TO_CUBE, m_VisionSubsystem.getCubeLocation(), swerveSubsystem.getPose());
+
+    var swerveControllerCommand = new SwerveControllerCommand(trajectory, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
+
+    return new InstantCommand(()-> {swerveSubsystem.resetOdometry(trajectory.getInitialPose());}, swerveSubsystem).andThen(swerveControllerCommand).andThen(() -> swerveSubsystem.stopModules());
+  }
+  
   public Command getAutonomousCommand() {
     swerveSubsystem.setRelativeTurnEncoderValue();
     return m_pathChooser.getSelected();
@@ -197,7 +210,7 @@ public class RobotContainer {
   }
 
   public Command bumpSideRed(){
-    Trajectory trajectory3 = pathPicker.getTrajectory(Path.BUMP_RED);
+    Trajectory trajectory3 = pathPicker.getTrajectory(Path.BUMP_RED); //Get trajectory takes a translation2d bcs the cube vision needs it
 
     var swerveControllerCommand = new SwerveControllerCommand(trajectory3, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
   
@@ -206,7 +219,7 @@ public class RobotContainer {
 
   public Command moveOutCommunityRed(){
     
-    Trajectory trajectory1 = pathPicker.getTrajectory(Path.MOVE_OUT_COMMUNITY_RED);
+    Trajectory trajectory1 = pathPicker.getTrajectory(Path.MOVE_OUT_COMMUNITY_RED); //Get trajectory takes a translation2d bcs the cube vision needs it
 
     var swerveControllerCommand = new SwerveControllerCommand(trajectory1, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
   
@@ -214,7 +227,7 @@ public class RobotContainer {
   }
 
   public Command moveOutCommunityBlue(){
-    Trajectory trajectory1 = pathPicker.getTrajectory(Path.MOVE_OUT_COMMUNITY_BLUE);
+    Trajectory trajectory1 = pathPicker.getTrajectory(Path.MOVE_OUT_COMMUNITY_BLUE); //Get trajectory takes a translation2d bcs the cube vision needs it
 
     var swerveControllerCommand = new SwerveControllerCommand(trajectory1, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
   
