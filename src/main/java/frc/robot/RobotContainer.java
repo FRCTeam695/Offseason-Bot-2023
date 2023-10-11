@@ -15,28 +15,33 @@ import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.intakeSubsystem;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.networktables.BooleanPublisher;
+import edu.wpi.first.networktables.BooleanSubscriber;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import edu.wpi.first.wpilibj2.command.button.NetworkButton;
 
 import java.util.function.DoubleSupplier;
 
 /**
- * This class is where the bulk of the robot should be declared. Since Command-based is a
- * "declarative" paradigm, very little robot logic should actually be handled in the {@link Robot}
- * periodic methods (other than the scheduler calls). Instead, the structure of the robot (including
+ * This class is where the bulk of the robot should be declared. Since
+ * Command-based is a
+ * "declarative" paradigm, very little robot logic should actually be handled in
+ * the {@link Robot}
+ * periodic methods (other than the scheduler calls). Instead, the structure of
+ * the robot (including
  * subsystems, commands, and trigger mappings) should be declared here.
  */
 public class RobotContainer {
@@ -50,12 +55,12 @@ public class RobotContainer {
   private final JoystickButton rightBumper = new JoystickButton(controller, 6);
   private final JoystickButton a_Button = new JoystickButton(controller, 1);
   private final JoystickButton b_Button = new JoystickButton(controller, 2);
-  private final JoystickButton x_Button = new JoystickButton(controller,3);
-  private final JoystickButton y_Button = new JoystickButton(controller,4);
+  private final JoystickButton x_Button = new JoystickButton(controller, 3);
+  private final JoystickButton y_Button = new JoystickButton(controller, 4);
   private final JoystickButton back_Button = new JoystickButton(controller, 7);
 
-  //private final POVButton pov_Up = new POVButton(controller, 0);
-  //private final POVButton pov_Down = new POVButton(controller, 180);
+  // private final POVButton pov_Up = new POVButton(controller, 0);
+  // private final POVButton pov_Down = new POVButton(controller, 180);
 
   private final DoubleSupplier left_xAxis = () -> (controller.getRawAxis(0));
   private final DoubleSupplier left_yAxis = () -> (controller.getRawAxis(1));
@@ -63,18 +68,25 @@ public class RobotContainer {
 
   private int chargeStationState = 1;
   public int alliance;
-  
+
   private PIDController xController = new PIDController(1, 0, 0);
   private PIDController yController = new PIDController(1, 0, 0);
-  private ProfiledPIDController thetaController = new ProfiledPIDController(Constants.SummerSwerve.PROFILED_KP_VALUE, 0, 0, Constants.SummerSwerve.TRAPEZOID_THETA_CONSTRAINTS);
+  private ProfiledPIDController thetaController = new ProfiledPIDController(Constants.SummerSwerve.PROFILED_KP_VALUE, 0,
+      0, Constants.SummerSwerve.TRAPEZOID_THETA_CONSTRAINTS);
 
   private final PathPicker pathPicker = new PathPicker();
+
+  private NetworkTable ntSidecar;
+  private BooleanPublisher currentCubeModePublisher;
+  private BooleanSubscriber currentCubeModeSubscriber;
+
+  private final NetworkButton goToCubeButton = new NetworkButton(currentCubeModeSubscriber);
 
   SendableChooser<Command> m_pathChooser = new SendableChooser<>();
 
   public RobotContainer() {
     thetaController.enableContinuousInput(-Math.PI, -Math.PI);
-    //m_pathChooser.setDefaultOption("Score Preload", scorePreload());
+    // m_pathChooser.setDefaultOption("Score Preload", scorePreload());
 
     m_pathChooser.setDefaultOption("Cube/Balance/Substation", substationSideCommandWrapper());
     m_pathChooser.addOption("Cube/Balance/Bump", bumpSideCommandWrapper());
@@ -87,28 +99,47 @@ public class RobotContainer {
     yController.reset();
     thetaController.reset(null);
 
+    ntSidecar = NetworkTableInstance.getDefault().getTable("sidecar9995");
+    currentCubeModePublisher = ntSidecar.getBooleanTopic("Go to Cube").publish();
+    currentCubeModeSubscriber = ntSidecar.getBooleanTopic("Go to Cube").subscribe(false, null);
+
     configureBindings();
     instantCommands();
     defaultCommands();
   }
 
   private void configureBindings() {
-    leftBumper.whileTrue(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem,-0.25)); // intake the cube
-    rightBumper.whileTrue(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, 0.15)); //outtake the cube, lower level
-    a_Button.whileTrue(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, 0.95)); //blast outtake the cube, high level
-    b_Button.whileTrue(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, 0.25)); //outtake, mid level 
-    //new ParallelRaceGroup(goToCubeCommand(), new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, -0.25));  //GET THIS WORKING WITH NETWORKTABLE BUTTON
+    leftBumper.whileTrue(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, -0.25)); // intake the cube
+    rightBumper.whileTrue(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, 0.15)); // outtake the cube, lower level
+    a_Button.whileTrue(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, 0.95)); // blast outtake the cube, high
+                                                                                    // level
+    b_Button.whileTrue(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, 0.25)); // outtake, mid level
+    goToCubeButton.onTrue(new InstantCommand(() -> SmartDashboard.putBoolean("Get Cube State", true))
+        .andThen(new WaitCommand(1))
+        .andThen(new InstantCommand(() -> currentCubeModePublisher.set(false)))
+        .andThen(new InstantCommand(() -> SmartDashboard.putBoolean("Get Cube State", false))));
+    // goToCubeButton
+    // .onTrue(new ParallelRaceGroup(goToCubeCommand(), new
+    // intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, -0.25))
+    // .andThen(new InstantCommand(() -> currentCubeModePublisher.set(false))));
   }
 
   private void instantCommands() {
-    back_Button.onTrue(new InstantCommand(()-> {swerveSubsystem.zeroHeading();}, swerveSubsystem));
-    x_Button.onTrue(new InstantCommand(()-> {m_ArmSubsystem.setLevel(1);}, m_ArmSubsystem));
-    y_Button.onTrue(new InstantCommand(()-> {m_ArmSubsystem.setLevel(2);}, m_ArmSubsystem));
+    back_Button.onTrue(new InstantCommand(() -> {
+      swerveSubsystem.zeroHeading();
+    }, swerveSubsystem));
+    x_Button.onTrue(new InstantCommand(() -> {
+      m_ArmSubsystem.setLevel(1);
+    }, m_ArmSubsystem));
+    y_Button.onTrue(new InstantCommand(() -> {
+      m_ArmSubsystem.setLevel(2);
+    }, m_ArmSubsystem));
   }
 
   private void defaultCommands() {
     m_VisionSubsystem.setDefaultCommand(new VisionPoseUpdateCommand(m_VisionSubsystem, swerveSubsystem));
-    swerveSubsystem.setDefaultCommand(new SwerveDriveCommand(swerveSubsystem, left_xAxis, left_yAxis, right_xAxis, true));
+    swerveSubsystem
+        .setDefaultCommand(new SwerveDriveCommand(swerveSubsystem, left_xAxis, left_yAxis, right_xAxis, true));
   }
 
   /**
@@ -116,153 +147,187 @@ public class RobotContainer {
    *
    * @return the command to run in autonomous
    */
-  
+
   public Command goToCubeCommand() {
-    Trajectory trajectory = pathPicker.getTrajectory(Path.MOVE_TO_CUBE, m_VisionSubsystem.getCubeLocation(), swerveSubsystem.getPose());
+    Trajectory trajectory = pathPicker.getTrajectory(Path.MOVE_TO_CUBE, m_VisionSubsystem.getCubeLocation(),
+        swerveSubsystem.getPose());
 
-    var swerveControllerCommand = new SwerveControllerCommand(trajectory, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
+    var swerveControllerCommand = new SwerveControllerCommand(trajectory, swerveSubsystem::getPose,
+        Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules,
+        swerveSubsystem);
 
-    return new InstantCommand(()-> {swerveSubsystem.resetOdometry(trajectory.getInitialPose());}, swerveSubsystem).andThen(swerveControllerCommand).andThen(() -> swerveSubsystem.stopModules());
+    return new InstantCommand(() -> {
+      swerveSubsystem.resetOdometry(trajectory.getInitialPose());
+    }, swerveSubsystem).andThen(swerveControllerCommand).andThen(() -> swerveSubsystem.stopModules());
   }
-  
+
   public Command getAutonomousCommand() {
     swerveSubsystem.setRelativeTurnEncoderValue();
     return m_pathChooser.getSelected();
   }
 
-  public Command scoreLeaveCommunity(){
-    if(DriverStation.getAlliance() == DriverStation.Alliance.Red){
+  public Command scoreLeaveCommunity() {
+    if (DriverStation.getAlliance() == DriverStation.Alliance.Red) {
       return scorePreload().andThen(moveOutCommunityRed());
-    }
-    else{
+    } else {
       return scorePreload().andThen(moveOutCommunityBlue());
     }
   }
 
-  public Command substationSideCommandWrapper(){
+  public Command substationSideCommandWrapper() {
     return substationSideCommand();
   }
 
-  public Command bumpSideCommandWrapper(){
+  public Command bumpSideCommandWrapper() {
     return bumpSideCommand();
   }
 
-  public Command substationSideCommand(){
+  public Command substationSideCommand() {
     System.out.println(DriverStation.getAlliance());
-    if(DriverStation.getAlliance() == DriverStation.Alliance.Red){
+    if (DriverStation.getAlliance() == DriverStation.Alliance.Red) {
       return scorePreload()
-      .andThen(new InstantCommand(()-> {m_IntakeSubsystem.testing();}, m_IntakeSubsystem))
-      .andThen(new InstantCommand(()-> {m_IntakeSubsystem.testingSendableChooser();}, m_IntakeSubsystem))
-      .andThen(substationSideRed()) //Gets to position infront of the charge station
-      .andThen(new ParallelRaceGroup(moveToChargeStation(), engageChargeStation()));
-    }else{
+          .andThen(new InstantCommand(() -> {
+            m_IntakeSubsystem.testing();
+          }, m_IntakeSubsystem))
+          .andThen(new InstantCommand(() -> {
+            m_IntakeSubsystem.testingSendableChooser();
+          }, m_IntakeSubsystem))
+          .andThen(substationSideRed()) // Gets to position infront of the charge station
+          .andThen(new ParallelRaceGroup(moveToChargeStation(), engageChargeStation()));
+    } else {
       return scorePreload()
-    .andThen(new InstantCommand(()-> {m_IntakeSubsystem.testing2();}, m_IntakeSubsystem))
-    .andThen(new InstantCommand(()-> {m_IntakeSubsystem.testingSendableChooser();}, m_IntakeSubsystem))
-    .andThen(bumpSideRed()) //Gets to position infront of the charge station
-    .andThen(new ParallelRaceGroup(moveToChargeStation(), engageChargeStation()));
+          .andThen(new InstantCommand(() -> {
+            m_IntakeSubsystem.testing2();
+          }, m_IntakeSubsystem))
+          .andThen(new InstantCommand(() -> {
+            m_IntakeSubsystem.testingSendableChooser();
+          }, m_IntakeSubsystem))
+          .andThen(bumpSideRed()) // Gets to position infront of the charge station
+          .andThen(new ParallelRaceGroup(moveToChargeStation(), engageChargeStation()));
     }
   }
 
-  public Command bumpSideCommand(){
+  public Command bumpSideCommand() {
     System.out.println(DriverStation.getAlliance());
 
-    if(DriverStation.getAlliance() == DriverStation.Alliance.Blue){
+    if (DriverStation.getAlliance() == DriverStation.Alliance.Blue) {
       return scorePreload()
-      .andThen(new InstantCommand(()-> {m_IntakeSubsystem.testing();}, m_IntakeSubsystem))
-      .andThen(new InstantCommand(()-> {m_IntakeSubsystem.testingSendableChooser2();}, m_IntakeSubsystem))
-      .andThen(substationSideRed()) //Gets to position infront of the charge station
-      .andThen(new ParallelRaceGroup(moveToChargeStation(), engageChargeStation()));
-    }
-    else{
+          .andThen(new InstantCommand(() -> {
+            m_IntakeSubsystem.testing();
+          }, m_IntakeSubsystem))
+          .andThen(new InstantCommand(() -> {
+            m_IntakeSubsystem.testingSendableChooser2();
+          }, m_IntakeSubsystem))
+          .andThen(substationSideRed()) // Gets to position infront of the charge station
+          .andThen(new ParallelRaceGroup(moveToChargeStation(), engageChargeStation()));
+    } else {
       return scorePreload()
-    .andThen(new InstantCommand(()-> {m_IntakeSubsystem.testing2();}, m_IntakeSubsystem))
-    .andThen(new InstantCommand(()-> {m_IntakeSubsystem.testingSendableChooser2();}, m_IntakeSubsystem))
-    .andThen(bumpSideRed()) //Gets to position infront of the charge station
-    .andThen(new ParallelRaceGroup(moveToChargeStation(), engageChargeStation()));
+          .andThen(new InstantCommand(() -> {
+            m_IntakeSubsystem.testing2();
+          }, m_IntakeSubsystem))
+          .andThen(new InstantCommand(() -> {
+            m_IntakeSubsystem.testingSendableChooser2();
+          }, m_IntakeSubsystem))
+          .andThen(bumpSideRed()) // Gets to position infront of the charge station
+          .andThen(new ParallelRaceGroup(moveToChargeStation(), engageChargeStation()));
     }
   }
 
-  public Command scorePreload()
-  {
-    return new InstantCommand(()-> {m_ArmSubsystem.setLevel(2);}, m_ArmSubsystem)
-    .andThen(new WaitCommand(1))
-    .andThen(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, 0.95))
-    .andThen(new WaitCommand(1))
-    .andThen(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, 0));
+  public Command scorePreload() {
+    return new InstantCommand(() -> {
+      m_ArmSubsystem.setLevel(2);
+    }, m_ArmSubsystem)
+        .andThen(new WaitCommand(1))
+        .andThen(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, 0.95))
+        .andThen(new WaitCommand(1))
+        .andThen(new intakeCommand(m_IntakeSubsystem, m_ArmSubsystem, 0));
   }
 
-  public Command substationSideRed(){
-    
+  public Command substationSideRed() {
+
     Trajectory trajectory1 = pathPicker.getTrajectory(Path.SUBSTATION_RED);
 
-    var swerveControllerCommand = new SwerveControllerCommand(trajectory1, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
-  
-    return new InstantCommand(()-> {swerveSubsystem.resetOdometry(trajectory1.getInitialPose());}, swerveSubsystem).andThen(swerveControllerCommand).andThen(() -> swerveSubsystem.stopModules());
+    var swerveControllerCommand = new SwerveControllerCommand(trajectory1, swerveSubsystem::getPose,
+        Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules,
+        swerveSubsystem);
+
+    return new InstantCommand(() -> {
+      swerveSubsystem.resetOdometry(trajectory1.getInitialPose());
+    }, swerveSubsystem).andThen(swerveControllerCommand).andThen(() -> swerveSubsystem.stopModules());
   }
 
-  public Command moveToChargeStation(){
+  public Command moveToChargeStation() {
     Trajectory trajectory2 = pathPicker.getTrajectory(Path.MOVE_TO_CHARGE_STATION);
 
-    var swerveControllerCommand = new SwerveControllerCommand(trajectory2, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
-  
+    var swerveControllerCommand = new SwerveControllerCommand(trajectory2, swerveSubsystem::getPose,
+        Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules,
+        swerveSubsystem);
+
     return swerveControllerCommand.andThen(() -> swerveSubsystem.stopModules());
   }
 
-  public Command bumpSideRed(){
-    Trajectory trajectory3 = pathPicker.getTrajectory(Path.BUMP_RED); //Get trajectory takes a translation2d bcs the cube vision needs it
+  public Command bumpSideRed() {
+    Trajectory trajectory3 = pathPicker.getTrajectory(Path.BUMP_RED);
 
-    var swerveControllerCommand = new SwerveControllerCommand(trajectory3, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
-  
-    return new InstantCommand(()-> {swerveSubsystem.resetOdometry(trajectory3.getInitialPose());}, swerveSubsystem).andThen(swerveControllerCommand).andThen(() -> swerveSubsystem.stopModules());
+    var swerveControllerCommand = new SwerveControllerCommand(trajectory3, swerveSubsystem::getPose,
+        Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules,
+        swerveSubsystem);
+
+    return new InstantCommand(() -> {
+      swerveSubsystem.resetOdometry(trajectory3.getInitialPose());
+    }, swerveSubsystem).andThen(swerveControllerCommand).andThen(() -> swerveSubsystem.stopModules());
   }
 
-  public Command moveOutCommunityRed(){
-    
-    Trajectory trajectory1 = pathPicker.getTrajectory(Path.MOVE_OUT_COMMUNITY_RED); //Get trajectory takes a translation2d bcs the cube vision needs it
+  public Command moveOutCommunityRed() {
 
-    var swerveControllerCommand = new SwerveControllerCommand(trajectory1, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
-  
-    return new InstantCommand(()-> {swerveSubsystem.resetOdometry(trajectory1.getInitialPose());}, swerveSubsystem).andThen(swerveControllerCommand).andThen(() -> swerveSubsystem.stopModules());
+    Trajectory trajectory1 = pathPicker.getTrajectory(Path.MOVE_OUT_COMMUNITY_RED);
+
+    var swerveControllerCommand = new SwerveControllerCommand(trajectory1, swerveSubsystem::getPose,
+        Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules,
+        swerveSubsystem);
+
+    return new InstantCommand(() -> {
+      swerveSubsystem.resetOdometry(trajectory1.getInitialPose());
+    }, swerveSubsystem).andThen(swerveControllerCommand).andThen(() -> swerveSubsystem.stopModules());
   }
 
-  public Command moveOutCommunityBlue(){
-    Trajectory trajectory1 = pathPicker.getTrajectory(Path.MOVE_OUT_COMMUNITY_BLUE); //Get trajectory takes a translation2d bcs the cube vision needs it
+  public Command moveOutCommunityBlue() {
+    Trajectory trajectory1 = pathPicker.getTrajectory(Path.MOVE_OUT_COMMUNITY_BLUE);
 
-    var swerveControllerCommand = new SwerveControllerCommand(trajectory1, swerveSubsystem::getPose, Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules, swerveSubsystem);
-  
-    return new InstantCommand(()-> {swerveSubsystem.resetOdometry(trajectory1.getInitialPose());}, swerveSubsystem).andThen(swerveControllerCommand).andThen(() -> swerveSubsystem.stopModules());
+    var swerveControllerCommand = new SwerveControllerCommand(trajectory1, swerveSubsystem::getPose,
+        Constants.SummerSwerve.kDriveKinematics, xController, yController, thetaController, swerveSubsystem::setModules,
+        swerveSubsystem);
+
+    return new InstantCommand(() -> {
+      swerveSubsystem.resetOdometry(trajectory1.getInitialPose());
+    }, swerveSubsystem).andThen(swerveControllerCommand).andThen(() -> swerveSubsystem.stopModules());
   }
-  
 
-  public Command engageChargeStation(){
-    //Constantly checks to see if we have balanced
+  public Command engageChargeStation() {
+    // Constantly checks to see if we have balanced
     return new FunctionalCommand(
 
-    // init
-    ()-> 
-    {
-      swerveSubsystem.startTickCount();
-    },
+        // init
+        () -> {
+          swerveSubsystem.startTickCount();
+        },
 
-    // execute
-    ()-> 
-    {
-        if(swerveSubsystem.getPitch() <= -15){
-          chargeStationState = 2;
-        }
-        if(swerveSubsystem.getPitch() >= -10 && chargeStationState == 2){
-          chargeStationState = 3;
-        }
-    },
+        // execute
+        () -> {
+          if (swerveSubsystem.getPitch() <= -15) {
+            chargeStationState = 2;
+          }
+          if (swerveSubsystem.getPitch() >= -10 && chargeStationState == 2) {
+            chargeStationState = 3;
+          }
+        },
 
-    // end
-    interrupted-> 
-    {
-      swerveSubsystem.driveSwerve(0, 0, 0, true);
-    },
+        // end
+        interrupted -> {
+          swerveSubsystem.driveSwerve(0, 0, 0, true);
+        },
 
-    // end condition
-    ()-> chargeStationState == 3);  //if we have balanced
+        // end condition
+        () -> chargeStationState == 3); // if we have balanced
   }
 }
